@@ -6,7 +6,7 @@
 #include "GridExtractor.h"
 
 int main() {
-    cv::Mat im = cv::imread("tilt1.jpg");
+    cv::Mat im = cv::imread("simple5.jpg");
     cv::Mat image;
     cv::resize(im, image, cv::Size(), 0.5, 0.5);
 

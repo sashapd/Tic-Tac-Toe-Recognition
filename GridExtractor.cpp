@@ -1,11 +1,11 @@
 //
 // Created by Oleksandr Padko on 8/16/17.
 //
-
-#include <map>
-#include <unordered_set>
-#include <unordered_map>
+#include <opencv2/core/core.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include "opencv2/imgproc.hpp"
 #include "GridExtractor.h"
+
 
 GridExtractor::GridExtractor(const cv::Mat &image) {
     mImage = image;
@@ -16,11 +16,17 @@ void GridExtractor::extractGrid() {
 
     std::vector<cv::Vec4i> gridLines = getGridLines(lines);
 
+    for( size_t i = 0; i < gridLines.size(); i++ )
+    {
+        cv::Vec4i l = gridLines[i];
+        cv::line( mImage, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, cv::LINE_AA);
+    }
+
     std::vector<cv::Point2f> gridCoordinates = getGridCoordinates(gridLines);
 
     cv::Mat gridImage(512, 512, CV_8UC3);
     cv::Point2f dstPoint[4] = {cv::Point2f(0, 0), cv::Point2f(0, gridImage.rows),
-                             cv::Point2f(gridImage.cols, gridImage.rows), cv::Point2f(gridImage.cols, 0)};
+                               cv::Point2f(gridImage.cols, gridImage.rows), cv::Point2f(gridImage.cols, 0)};
 
     cv::Mat transformMatr = cv::getPerspectiveTransform(gridCoordinates.data(), dstPoint);
 
@@ -60,14 +66,8 @@ double GridExtractor::getSlope(const cv::Vec4i &line) const {
     return (double) (line[1] - line[3]) / (line[0] - line[2]);
 }
 
-bool compareLines(const cv::Vec4i &line1, const cv::Vec4i &line2) {
-    double line1Length = pow(pow(line1[0] - line1[2], 2) + pow(line1[1] - line1[3], 2), 0.5);
-    double line2Length = pow(pow(line2[0] - line2[2], 2) + pow(line2[1] - line2[3], 2), 0.5);
-    return line1Length > line2Length;
-}
-
 std::vector<cv::Vec4i>
-GridExtractor::filterSimmilar(std::vector<cv::Vec4i>& lines, double angleThresh, double lengthThresh) const {
+GridExtractor::filterSimmilar(std::vector<cv::Vec4i> lines, double angleThresh, double lengthThresh) const {
     std::vector<cv::Vec4i> filtered;
     std::sort(lines.begin(), lines.end(), compareLines);
 
@@ -96,7 +96,7 @@ GridExtractor::filterSimmilar(std::vector<cv::Vec4i>& lines, double angleThresh,
     return filtered;
 }
 
-int GridExtractor::orientation(const cv::Point& p, const cv::Point& q, const cv::Point& r) const {
+int GridExtractor::orientation(const cv::Point &p, const cv::Point &q, const cv::Point &r) const {
     int val = (q.y - p.y) * (r.x - q.x) -
               (q.x - p.x) * (r.y - q.y);
 
@@ -105,7 +105,8 @@ int GridExtractor::orientation(const cv::Point& p, const cv::Point& q, const cv:
 
 // function that returns true if line segment 'p1q1'
 // and 'p2q2' intersect.
-bool GridExtractor::doIntersect(const cv::Point& p1, const cv::Point& q1, const cv::Point& p2, const cv::Point& q2) const {
+bool
+GridExtractor::doIntersect(const cv::Point &p1, const cv::Point &q1, const cv::Point &p2, const cv::Point &q2) const {
     int o1 = orientation(p1, q1, p2);
     int o2 = orientation(p1, q1, q2);
     int o3 = orientation(p2, q2, p1);
@@ -114,30 +115,27 @@ bool GridExtractor::doIntersect(const cv::Point& p1, const cv::Point& q1, const 
     return (o1 != o2 && o3 != o4);
 }
 
-std::vector<cv::Vec4i> GridExtractor::getIntersectingLines(const cv::Vec4i& line, const std::vector<cv::Vec4i>& lines) const {
+std::vector<cv::Vec4i>
+GridExtractor::getIntersectingLines(const cv::Vec4i &line, const std::vector<cv::Vec4i> &lines) const {
     std::vector<cv::Vec4i> intersecting;
     cv::Point p2(line[0], line[1]), q2(line[2], line[3]);
     for (auto &&l : lines) {
         cv::Point p1(l[0], l[1]), q1(l[2], l[3]);
-        if(doIntersect(p1, q1, p2, q2)) {
+        if (doIntersect(p1, q1, p2, q2)) {
             intersecting.push_back(l);
         }
     }
     return intersecting;
 }
 
-std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i>& lines) const {
-    std::unordered_map<cv::Vec4i, std::vector<cv::Vec4i>> lineIntersections;
+std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> &lines) const {
     for (auto &&line : lines) {
-        lineIntersections[line] = getIntersectingLines(line, lines);
-    }
-    for (auto &&line : lines) {
-        std::vector<cv::Vec4i> intersecting = lineIntersections[line];
+        std::vector<cv::Vec4i> intersecting = getIntersectingLines(line, lines);
         if(intersecting.size() == 2) {
             cv::Vec4i line1 = intersecting[0];
             cv::Vec4i line2 = intersecting[1];
-            std::vector<cv::Vec4i> line1Intersecting = lineIntersections[line1];
-            std::vector<cv::Vec4i> line2Intersecting = lineIntersections[line2];
+            std::vector<cv::Vec4i> line1Intersecting = getIntersectingLines(line1, lines);
+            std::vector<cv::Vec4i> line2Intersecting = getIntersectingLines(line2, lines);
             std::sort(line1Intersecting.begin(), line1Intersecting.end(), compareLines);
             std::sort(line2Intersecting.begin(), line2Intersecting.end(), compareLines);
             if(line1Intersecting.size() == 2 && line1Intersecting == line2Intersecting) {
@@ -147,14 +145,22 @@ std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i>&
     }
 }
 
-std::vector<cv::Point2f> GridExtractor::getGridCoordinates(const std::vector<cv::Vec4i>& lines) const {
-    int minX = 0, minY = 0, maxX = 0, maxY = 0;
+std::vector<cv::Point2f> GridExtractor::getGridCoordinates(const std::vector<cv::Vec4i> &lines) const {
+    cv::norm(p1 - p2);
+    int minX = INT_MAX, minY = INT_MAX, maxX = 0, maxY = 0;
     for (auto &&line : lines) {
-        minX = std::min(line[0], line[2], minX);
-        minY = std::min(line[1], line[3], minY);
-        maxX = std::max(line[0], line[2], maxX);
-        maxY = std::max(line[1], line[3], maxY);
+        minX = std::min(line[0], minX);
+        minX = std::min(line[2], minX);
+
+        minY = std::min(line[1], minY);
+        minY = std::min(line[3], minY);
+
+        maxX = std::max(line[0], maxX);
+        maxX = std::max(line[2], maxX);
+
+        maxY = std::max(line[1], maxY);
+        maxY = std::max(line[3], maxY);
     }
     return std::vector<cv::Point2f> {cv::Point2f(minX, minY), cv::Point2f(minX, maxY),
-                                   cv::Point2f(maxX, maxY), cv::Point2f(maxX, minY)};
+                                     cv::Point2f(maxX, maxY), cv::Point2f(maxX, minY)};
 }

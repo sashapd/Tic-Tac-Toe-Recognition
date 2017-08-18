@@ -8,7 +8,6 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc.hpp"
-#include <opencv2/core/mat.hpp>
 
 class GridExtractor {
 public:
@@ -28,9 +27,13 @@ private:
 
     double getSlope(const cv::Vec4i &line) const;
 
-    //bool compareLines(const cv::Vec4i &line1, const cv::Vec4i &line2) const;
+    static bool compareLines(const cv::Vec4i &line1, const cv::Vec4i &line2) {
+        double line1Length = pow(pow(line1[0] - line1[2], 2) + pow(line1[1] - line1[3], 2), 0.5);
+        double line2Length = pow(pow(line2[0] - line2[2], 2) + pow(line2[1] - line2[3], 2), 0.5);
+        return line1Length > line2Length;
+    }
 
-    std::vector<cv::Vec4i> filterSimmilar(std::vector<cv::Vec4i> &lines, double angleThresh, double lengthThresh) const;
+    std::vector<cv::Vec4i> filterSimmilar(std::vector<cv::Vec4i> lines, double angleThresh, double lengthThresh) const;
 
     int orientation(const cv::Point &p, const cv::Point &q, const cv::Point &r) const;
 
