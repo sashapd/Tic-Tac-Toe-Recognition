@@ -21,17 +21,21 @@ void GridExtractor::extractGrid() {
         cv::line(mImage, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
     }
 
-    std::vector<cv::Point2f> gridCoordinates = getGridCoordinates(gridLines);
+    if (gridLines.size() == 4) {
+        foundGrid = true;
 
-    cv::Mat gridImage(512, 512, CV_8UC3);
-    cv::Point2f dstPoint[4] = {cv::Point2f(0, 0), cv::Point2f(0, gridImage.rows),
-                               cv::Point2f(gridImage.cols, gridImage.rows), cv::Point2f(gridImage.cols, 0)};
+        std::vector<cv::Point2f> gridCoordinates = getGridCoordinates(gridLines);
 
-    cv::Mat transformMatr = cv::getPerspectiveTransform(gridCoordinates.data(), dstPoint);
+        cv::Mat gridImage(512, 512, CV_8UC3);
+        cv::Point2f dstPoint[4] = {cv::Point2f(0, 0), cv::Point2f(0, gridImage.rows),
+                                   cv::Point2f(gridImage.cols, gridImage.rows), cv::Point2f(gridImage.cols, 0)};
 
-    cv::warpPerspective(mImage, gridImage, transformMatr, gridImage.size());
+        cv::Mat transformMatr = cv::getPerspectiveTransform(gridCoordinates.data(), dstPoint);
 
-    mGrid = gridImage;
+        cv::warpPerspective(mImage, gridImage, transformMatr, gridImage.size());
+
+        mGrid = gridImage;
+    }
 }
 
 cv::Mat GridExtractor::getGrid() {
@@ -40,6 +44,10 @@ cv::Mat GridExtractor::getGrid() {
 
 cv::Mat GridExtractor::getImage() {
     return mImage;
+}
+
+bool GridExtractor::hasFoundGrid() const {
+    return foundGrid;
 }
 
 std::vector<cv::Vec4i> GridExtractor::findLines() {
@@ -142,9 +150,21 @@ std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> 
             }
         }
     }
+    return std::vector<cv::Vec4i>();
 }
 
-std::vector<cv::Point2f> GridExtractor::getGridCoordinates(const std::vector<cv::Vec4i> &lines) const {
+cv::Point GridExtractor::getIntesectionCoordinate(const cv::Vec4i &line1, const cv::Vec4i &line2) const {
+    cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]);
+    cv::Point p3(line2[0], line2[1]), p4(line2[2], line2[3]);
+    cv::Point intersection;
+    intersection.x = (p1.x*p2.y - p1.y*p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x*p4.y - p3.y*p4.x) /
+                     (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+    intersection.y = (p1.x*p2.y - p1.y*p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x*p4.y - p3.y*p4.x) /
+                     (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+    return intersection;
+}
+
+std::vector<cv::Point2f> GridExtractor::getGridCoordinates(std::vector<cv::Vec4i> lines) const {
     int minX = INT_MAX, minY = INT_MAX, maxX = 0, maxY = 0;
     for (auto &&line : lines) {
         minX = std::min(line[0], minX);
