@@ -146,7 +146,6 @@ std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> 
 }
 
 std::vector<cv::Point2f> GridExtractor::getGridCoordinates(const std::vector<cv::Vec4i> &lines) const {
-    cv::norm(p1 - p2);
     int minX = INT_MAX, minY = INT_MAX, maxX = 0, maxY = 0;
     for (auto &&line : lines) {
         minX = std::min(line[0], minX);
