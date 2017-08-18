@@ -16,10 +16,9 @@ void GridExtractor::extractGrid() {
 
     std::vector<cv::Vec4i> gridLines = getGridLines(lines);
 
-    for( size_t i = 0; i < gridLines.size(); i++ )
-    {
+    for (size_t i = 0; i < gridLines.size(); i++) {
         cv::Vec4i l = gridLines[i];
-        cv::line( mImage, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0,0,255), 3, cv::LINE_AA);
+        cv::line(mImage, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
     }
 
     std::vector<cv::Point2f> gridCoordinates = getGridCoordinates(gridLines);
@@ -131,14 +130,14 @@ GridExtractor::getIntersectingLines(const cv::Vec4i &line, const std::vector<cv:
 std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> &lines) const {
     for (auto &&line : lines) {
         std::vector<cv::Vec4i> intersecting = getIntersectingLines(line, lines);
-        if(intersecting.size() == 2) {
+        if (intersecting.size() == 2) {
             cv::Vec4i line1 = intersecting[0];
             cv::Vec4i line2 = intersecting[1];
             std::vector<cv::Vec4i> line1Intersecting = getIntersectingLines(line1, lines);
             std::vector<cv::Vec4i> line2Intersecting = getIntersectingLines(line2, lines);
             std::sort(line1Intersecting.begin(), line1Intersecting.end(), compareLines);
             std::sort(line2Intersecting.begin(), line2Intersecting.end(), compareLines);
-            if(line1Intersecting.size() == 2 && line1Intersecting == line2Intersecting) {
+            if (line1Intersecting.size() == 2 && line1Intersecting == line2Intersecting) {
                 return std::vector<cv::Vec4i> {line1, line2, line1Intersecting[0], line1Intersecting[1]};
             }
         }
