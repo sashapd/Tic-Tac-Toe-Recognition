@@ -3,6 +3,7 @@
 //
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <iostream>
 #include "opencv2/imgproc.hpp"
 #include "GridExtractor.h"
 
@@ -146,39 +147,39 @@ std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> 
             std::sort(line1Intersecting.begin(), line1Intersecting.end(), compareLines);
             std::sort(line2Intersecting.begin(), line2Intersecting.end(), compareLines);
             if (line1Intersecting.size() == 2 && line1Intersecting == line2Intersecting) {
-                return std::vector<cv::Vec4i> {line1, line2, line1Intersecting[0], line1Intersecting[1]};
+                return std::vector<cv::Vec4i> {line1, line1Intersecting[0], line2, line1Intersecting[1]};
             }
         }
     }
     return std::vector<cv::Vec4i>();
 }
 
-cv::Point GridExtractor::getIntesectionCoordinate(const cv::Vec4i &line1, const cv::Vec4i &line2) const {
-    cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]);
-    cv::Point p3(line2[0], line2[1]), p4(line2[2], line2[3]);
-    cv::Point intersection;
-    intersection.x = (p1.x*p2.y - p1.y*p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x*p4.y - p3.y*p4.x) /
-                     (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
-    intersection.y = (p1.x*p2.y - p1.y*p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x*p4.y - p3.y*p4.x) /
-                     (p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x);
+cv::Point2f GridExtractor::getIntesectionCoordinate(const cv::Vec4i &line1, const cv::Vec4i &line2) const {
+    cv::Point2f p1(line1[0], line1[1]), p2(line1[2], line1[3]);
+    cv::Point2f p3(line2[0], line2[1]), p4(line2[2], line2[3]);
+    cv::Point2f intersection;
+    intersection.x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)) /
+                     ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
+    intersection.y = ((p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x)) /
+                     ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
     return intersection;
 }
 
 std::vector<cv::Point2f> GridExtractor::getGridCoordinates(std::vector<cv::Vec4i> lines) const {
-    int minX = INT_MAX, minY = INT_MAX, maxX = 0, maxY = 0;
-    for (auto &&line : lines) {
-        minX = std::min(line[0], minX);
-        minX = std::min(line[2], minX);
+    std::vector<cv::Point2f> innerPoints;
 
-        minY = std::min(line[1], minY);
-        minY = std::min(line[3], minY);
-
-        maxX = std::max(line[0], maxX);
-        maxX = std::max(line[2], maxX);
-
-        maxY = std::max(line[1], maxY);
-        maxY = std::max(line[3], maxY);
+    for (int i = 0; i < lines.size() - 1; i++) {
+        innerPoints.push_back(getIntesectionCoordinate(lines[i], lines[i + 1]));
     }
-    return std::vector<cv::Point2f> {cv::Point2f(minX, minY), cv::Point2f(minX, maxY),
-                                     cv::Point2f(maxX, maxY), cv::Point2f(maxX, minY)};
+    innerPoints.push_back(getIntesectionCoordinate(lines[0], lines.back()));
+    cv::Point2f center(0, 0);
+    for (auto &&point  : innerPoints) {
+        center += point;
+    }
+    center.x /= innerPoints.size();
+    center.y /= innerPoints.size();
+
+    std::sort(innerPoints.begin(), innerPoints.end(),
+              std::bind(comparePointsClockwise, std::placeholders::_1, std::placeholders::_2, center));
+    return innerPoints;
 }
