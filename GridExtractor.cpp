@@ -25,11 +25,14 @@ void GridExtractor::extractGrid() {
     if (gridLines.size() == 4) {
         foundGrid = true;
 
-        std::vector<cv::Point2f> gridCoordinates = getGridCoordinates(gridLines);
+        std::vector<cv::Point2f> gridCoordinates = getGridInnerCoordinates(gridLines);
 
         cv::Mat gridImage(512, 512, CV_8UC3);
-        cv::Point2f dstPoint[4] = {cv::Point2f(0, 0), cv::Point2f(0, gridImage.rows),
-                                   cv::Point2f(gridImage.cols, gridImage.rows), cv::Point2f(gridImage.cols, 0)};
+        cv::Point2f dstPoint[4] = {
+                cv::Point2f(gridImage.cols * 2 / 3, gridImage.rows * 2 / 3),
+                cv::Point2f(gridImage.cols * 2 / 3, gridImage.rows / 3),
+                cv::Point2f(gridImage.cols / 3, gridImage.rows / 3),
+                cv::Point2f(gridImage.cols / 3, gridImage.rows * 2 / 3)};
 
         cv::Mat transformMatr = cv::getPerspectiveTransform(gridCoordinates.data(), dstPoint);
 
@@ -165,7 +168,7 @@ cv::Point2f GridExtractor::getIntesectionCoordinate(const cv::Vec4i &line1, cons
     return intersection;
 }
 
-std::vector<cv::Point2f> GridExtractor::getGridCoordinates(std::vector<cv::Vec4i> lines) const {
+std::vector<cv::Point2f> GridExtractor::getGridInnerCoordinates(std::vector<cv::Vec4i> lines) const {
     std::vector<cv::Point2f> innerPoints;
 
     for (int i = 0; i < lines.size() - 1; i++) {
@@ -179,6 +182,7 @@ std::vector<cv::Point2f> GridExtractor::getGridCoordinates(std::vector<cv::Vec4i
     center.x /= innerPoints.size();
     center.y /= innerPoints.size();
 
+    //sorting points clockwise from center staring at "12 o clock"
     std::sort(innerPoints.begin(), innerPoints.end(),
               std::bind(comparePointsClockwise, std::placeholders::_1, std::placeholders::_2, center));
     return innerPoints;

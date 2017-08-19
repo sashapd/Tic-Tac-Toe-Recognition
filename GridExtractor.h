@@ -74,7 +74,7 @@ private:
 
     cv::Point2f getIntesectionCoordinate(const cv::Vec4i &line1, const cv::Vec4i &line2) const;
 
-    std::vector<cv::Point2f> getGridCoordinates(std::vector<cv::Vec4i> lines) const;
+    std::vector<cv::Point2f> getGridInnerCoordinates(std::vector<cv::Vec4i> lines) const;
 };
 
 
