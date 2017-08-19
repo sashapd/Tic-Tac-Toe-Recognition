@@ -53,7 +53,7 @@ bool GridExtractor::hasFoundGrid() const {
 
 std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::Mat canny_output;
-    cv::Canny(mImage, canny_output, 50, 200, 3);
+    cv::Canny(mImage, canny_output, 50, 150, 3);
 
     int dialationSize = 6;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
@@ -63,7 +63,7 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::dilate(canny_output, dilated, dialationElement);
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 5, CV_PI / 90, 100, 100, 3);
+    cv::HoughLinesP(dilated, lines, 2, CV_PI / 180, 25, 75, 3);
 
     lines = filterSimmilar(lines, 0.349066, 10);
 
