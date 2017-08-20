@@ -6,8 +6,19 @@
 #define TICTACTOERECOGNITION_CELLCLASSIFIER_H
 
 
-class CellClassifier {
+#include <opencv2/core/mat.hpp>
+#include "Cell.h"
 
+class CellClassifier {
+public:
+    CellClassifier(cv::Mat cellImage);
+
+    Cell getCellValue();
+private:
+    cv::Mat mCellImage;
+
+    bool isCircle();
+    bool isCross();
 };
 
 
