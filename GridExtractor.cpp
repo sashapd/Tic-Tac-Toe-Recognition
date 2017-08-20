@@ -17,11 +17,6 @@ void GridExtractor::extractGrid() {
 
     std::vector<cv::Vec4i> gridLines = getGridLines(lines);
 
-    for (size_t i = 0; i < gridLines.size(); i++) {
-        cv::Vec4i l = gridLines[i];
-        cv::line(mImage, cv::Point(l[0], l[1]), cv::Point(l[2], l[3]), cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
-    }
-
     if (gridLines.size() == 4) {
         foundGrid = true;
 
