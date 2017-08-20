@@ -8,6 +8,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include "opencv2/imgproc.hpp"
+#include "Grid.h"
 
 class GridExtractor {
 public:
@@ -15,7 +16,7 @@ public:
 
     void extractGrid();
 
-    cv::Mat getGrid();
+    Grid getGrid();
 
     cv::Mat getImage();
 
@@ -23,7 +24,7 @@ public:
 
 private:
     cv::Mat mImage;
-    cv::Mat mGrid;
+    cv::Mat mGridImage;
     bool foundGrid = false;
 
     std::vector<cv::Vec4i> findLines();

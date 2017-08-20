@@ -38,12 +38,12 @@ void GridExtractor::extractGrid() {
 
         cv::warpPerspective(mImage, gridImage, transformMatr, gridImage.size());
 
-        mGrid = gridImage;
+        mGridImage = gridImage;
     }
 }
 
-cv::Mat GridExtractor::getGrid() {
-    return mGrid;
+Grid GridExtractor::getGrid() {
+    return Grid(mGridImage);
 }
 
 cv::Mat GridExtractor::getImage() {
