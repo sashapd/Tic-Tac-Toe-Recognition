@@ -7,9 +7,9 @@
 #include "GridDrawer.h"
 
 int main() {
-    cv::Mat im = cv::imread("board7.jpg");
-    cv::Mat image;
-    cv::resize(im, image, cv::Size(), 0.5, 0.5);
+    cv::Mat im = cv::imread("board4.jpg");
+    cv::Mat image = im;
+    cv::resize(im, image, cv::Size(1000, 1000 * im.rows / im.cols));
 
     GridExtractor extractor(image);
     extractor.extractGrid();
@@ -19,12 +19,12 @@ int main() {
     } else {
         Grid grid = extractor.getGrid();
         GridDrawer drawer(grid);
-        for(int i = 0; i < 3; i++) {
-            for(int j = 0; j < 3; j++) {
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
                 Cell c = grid.getCellValue(j, i);
-                if(c == O) {
+                if (c == O) {
                     drawer.drawCircle(j, i);
-                } else if(c == X) {
+                } else if (c == X) {
                     drawer.drawCross(j, i);
                 }
             }
