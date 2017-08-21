@@ -16,7 +16,7 @@ Grid::Grid(const Grid &grid) {
 }
 
 Grid &Grid::operator=(const Grid &grid) {
-    mGridImage = mGridImage;
+    mGridImage = grid.mGridImage;
     return *this;
 }
 
