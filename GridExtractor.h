@@ -16,15 +16,18 @@ public:
 
     void extractGrid();
 
-    Grid getGrid();
+    Grid getGrid() const;
 
-    cv::Mat getImage();
+    cv::Mat getImage() const;
 
     bool hasFoundGrid() const;
+
+    void putBackGrid(Grid grid) const;
 
 private:
     cv::Mat mImage;
     cv::Mat mGridImage;
+    std::vector<cv::Point2f> gridCoordinates;
     bool foundGrid = false;
 
     std::vector<cv::Vec4i> findLines();
@@ -37,8 +40,7 @@ private:
         return line1Length > line2Length;
     }
 
-    static bool comparePointsClockwise(cv::Point a, cv::Point b, cv::Point center)
-    {
+    static bool comparePointsClockwise(cv::Point a, cv::Point b, cv::Point center) {
         if (a.x - center.x >= 0 && b.x - center.x < 0)
             return true;
         if (a.x - center.x < 0 && b.x - center.x >= 0)

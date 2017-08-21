@@ -7,7 +7,7 @@
 #include "GridDrawer.h"
 
 int main() {
-    cv::Mat im = cv::imread("hoax2.jpg");
+    cv::Mat im = cv::imread("board7.jpg");
     cv::Mat image;
     cv::resize(im, image, cv::Size(), 0.5, 0.5);
 
@@ -29,7 +29,10 @@ int main() {
                 }
             }
         }
-        cv::imshow("image", grid.getImage());
+        extractor.putBackGrid(grid);
+        cv::Mat im = extractor.getImage();
+        cv::resize(im, im, cv::Size(1000, 1000 * im.rows / im.cols));
+        cv::imshow("image", im);
         cv::waitKey(0);
     }
 

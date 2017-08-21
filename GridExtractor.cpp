@@ -20,7 +20,7 @@ void GridExtractor::extractGrid() {
     if (gridLines.size() == 4) {
         foundGrid = true;
 
-        std::vector<cv::Point2f> gridCoordinates = getGridInnerCoordinates(gridLines);
+        gridCoordinates = getGridInnerCoordinates(gridLines);
 
         cv::Mat gridImage(512, 512, CV_8UC3);
         cv::Point2f dstPoint[4] = {
@@ -37,16 +37,36 @@ void GridExtractor::extractGrid() {
     }
 }
 
-Grid GridExtractor::getGrid() {
+Grid GridExtractor::getGrid() const {
     return Grid(mGridImage);
 }
 
-cv::Mat GridExtractor::getImage() {
+cv::Mat GridExtractor::getImage() const {
     return mImage;
 }
 
 bool GridExtractor::hasFoundGrid() const {
     return foundGrid;
+}
+
+void GridExtractor::putBackGrid(Grid grid) const {
+    cv::Mat gridImage = grid.getImage();
+    cv::Point2f srcPoints[4] = {
+            cv::Point2f(gridImage.cols * 2 / 3, gridImage.rows * 2 / 3),
+            cv::Point2f(gridImage.cols * 2 / 3, gridImage.rows / 3),
+            cv::Point2f(gridImage.cols / 3, gridImage.rows / 3),
+            cv::Point2f(gridImage.cols / 3, gridImage.rows * 2 / 3)};
+
+
+    cv::Mat transformMatr = cv::getPerspectiveTransform(srcPoints, gridCoordinates.data());
+
+    cv::Mat foreground(mImage.size(), mImage.type());
+
+    cv::warpPerspective(gridImage, foreground, transformMatr, foreground.size());
+
+    cv::Mat mask = foreground > 0;
+
+    foreground.copyTo(mImage, mask);
 }
 
 std::vector<cv::Vec4i> GridExtractor::findLines() {
