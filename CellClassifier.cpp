@@ -27,12 +27,21 @@ bool CellClassifier::isCircle() {
     cv::Mat grayImage;
     cv::cvtColor(mCellImage, grayImage, cv::COLOR_BGR2GRAY);
 
+    int morphSize = 6;
+    cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                                         cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
+                                                         cv::Point(morphSize, morphSize));
+    cv::Mat eroded, dilated;
+    cv::erode(grayImage, eroded, morphElement);
+    cv::dilate(eroded, dilated, morphElement);
+    cv::imshow("d" + std::to_string(grayImage.at<uchar>(0, 0)), dilated);
+
     cv::Mat blured;
     cv::GaussianBlur(grayImage, blured, cv::Size(9, 9), 2, 2 );
 
     std::vector<cv::Vec3f> circles;
 
-    cv::HoughCircles( blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows/16, 100, 45);
+    cv::HoughCircles( blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows/16, 50, 30);
 
     for (auto &&circle : circles) {
         if(circle[3] > minRadius) {
