@@ -45,15 +45,6 @@ bool CellClassifier::isCircle() {
     cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 50, 40);
 
     for (auto &&circle : circles) {
-        cv::Point center(cvRound(circle[0]), cvRound(circle[1]));
-        int radius = cvRound(circle[2]);
-        // circle center
-        cv::circle(mCellImage, center, 3, cv::Scalar(0, 255, 0), -1, 8, 0);
-        // circle outline
-        cv::circle(mCellImage, center, radius, cv::Scalar(0, 0, 255), 3, 8, 0);
-    }
-
-    for (auto &&circle : circles) {
         if (circle[3] > minRadius) {
             return true;
         }
@@ -83,11 +74,6 @@ bool CellClassifier::isCross() {
 
     std::vector<cv::Vec4i> lines;
     cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 50, 50, 10);
-
-    for (auto &&l : lines) {
-        cv::line(mCellImage, cv::Point(l[0] + offset, l[1] + offset), cv::Point(l[2] + offset, l[3] + offset),
-                 cv::Scalar(0, 0, 255), 3, CV_AA);
-    }
 
     std::vector<cv::Vec4i> filteredLines;
     for (auto &&line : lines) {
