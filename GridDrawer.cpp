@@ -3,6 +3,8 @@
 //
 
 #include <opencv2/imgproc.hpp>
+#include <iostream>
+#include <opencv/cv.hpp>
 #include "GridDrawer.h"
 
 GridDrawer::GridDrawer(Grid grid): crossColor(255, 0, 0), circleColor(0, 0, 255) {
@@ -11,13 +13,14 @@ GridDrawer::GridDrawer(Grid grid): crossColor(255, 0, 0), circleColor(0, 0, 255)
 
 void GridDrawer::drawCircle(int x, int y) {
     cv::Mat cellImg = mGrid.getCellImage(x, y);
+    int radius = cellImg.cols * 0.35;
     cv::Point center(cellImg.cols / 2, cellImg.rows / 2);
-    cv::circle(cellImg, center, cellImg.cols / 2, circleColor, 3);
+    cv::circle(cellImg, center, radius, circleColor, 3);
 }
 
 void GridDrawer::drawCross(int x, int y) {
     cv::Mat cellImg = mGrid.getCellImage(x, y);
-    int offset = cellImg.cols / 10;
+    int offset = cellImg.cols * 0.2;
     cv::Point p1(offset, offset), p2(cellImg.cols - offset, cellImg.rows - offset);
     cv::Point p3(offset, cellImg.rows - offset), p4(cellImg.cols - offset, offset);
     cv::line(cellImg, p1, p2, crossColor, 3);
