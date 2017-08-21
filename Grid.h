@@ -8,6 +8,7 @@
 
 #include <opencv2/core/mat.hpp>
 #include "Cell.h"
+#include "GridDrawer.h"
 
 class Grid {
 public:
@@ -27,6 +28,8 @@ private:
     cv::Mat mGridImage;
 
     cv::Mat getCellImage(int x, int y);
+
+    friend class GridDrawer;
 };
 
 
