@@ -73,7 +73,7 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::Mat canny_output;
     cv::Canny(mImage, canny_output, 50, 150, 3);
 
-    int dialationSize = 6;
+    int dialationSize = 5;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                          cv::Size(2 * dialationSize + 1, 2 * dialationSize + 1),
                                                          cv::Point(dialationSize, dialationSize));
@@ -81,7 +81,7 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::dilate(canny_output, dilated, dialationElement);
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 2, CV_PI / 180, 25, 75, 3);
+    cv::HoughLinesP(dilated, lines, 3, CV_PI / 180, 50, mImage.rows / 10, 2);
 
     lines = filterSimmilar(lines, 0.349066, 10);
 
@@ -157,14 +157,22 @@ GridExtractor::getIntersectingLines(const cv::Vec4i &line, const std::vector<cv:
 std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> &lines) const {
     for (auto &&line : lines) {
         std::vector<cv::Vec4i> intersecting = getIntersectingLines(line, lines);
+
         if (intersecting.size() == 2) {
             cv::Vec4i line1 = intersecting[0];
             cv::Vec4i line2 = intersecting[1];
+
             std::vector<cv::Vec4i> line1Intersecting = getIntersectingLines(line1, lines);
             std::vector<cv::Vec4i> line2Intersecting = getIntersectingLines(line2, lines);
+
             std::sort(line1Intersecting.begin(), line1Intersecting.end(), compareLines);
             std::sort(line2Intersecting.begin(), line2Intersecting.end(), compareLines);
-            if (line1Intersecting.size() == 2 && line1Intersecting == line2Intersecting) {
+
+            std::vector<cv::Vec4i> common;
+            //getting common intersection lines
+            std::set_intersection(line1Intersecting.begin(), line1Intersecting.end(), line2Intersecting.begin(),
+                                  line2Intersecting.end(), std::back_inserter(common), compareLines);
+            if (common.size() >= 2) {
                 return std::vector<cv::Vec4i> {line1, line1Intersecting[0], line2, line1Intersecting[1]};
             }
         }
