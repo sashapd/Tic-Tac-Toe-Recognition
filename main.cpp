@@ -4,9 +4,10 @@
 #include "opencv2/imgproc.hpp"
 #include <opencv2/core/mat.hpp>
 #include "GridExtractor.h"
+#include "GridDrawer.h"
 
 int main() {
-    cv::Mat im = cv::imread("hoax4.jpg");
+    cv::Mat im = cv::imread("hoax2.jpg");
     cv::Mat image;
     cv::resize(im, image, cv::Size(), 0.5, 0.5);
 
@@ -17,18 +18,16 @@ int main() {
         std::cout << "Grid not found" << std::endl;
     } else {
         Grid grid = extractor.getGrid();
+        GridDrawer drawer(grid);
         for(int i = 0; i < 3; i++) {
             for(int j = 0; j < 3; j++) {
                 Cell c = grid.getCellValue(j, i);
                 if(c == O) {
-                    std::cout << "O" << " ";
+                    drawer.drawCircle(j, i);
                 } else if(c == X) {
-                    std::cout << "X" << " ";
-                } else {
-                    std::cout << " " << " ";
+                    drawer.drawCross(j, i);
                 }
             }
-            std::cout << std::endl;
         }
         cv::imshow("image", grid.getImage());
         cv::waitKey(0);
