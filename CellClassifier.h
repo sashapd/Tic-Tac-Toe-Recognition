@@ -14,10 +14,12 @@ public:
     CellClassifier(cv::Mat cellImage);
 
     Cell getCellValue();
+
 private:
     cv::Mat mCellImage;
 
     bool isCircle();
+
     bool isCross();
 };
 
