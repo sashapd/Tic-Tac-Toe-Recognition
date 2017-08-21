@@ -65,7 +65,7 @@ bool CellClassifier::isCircle() {
 bool CellClassifier::isCross() {
     const double minLength = mCellImage.cols / 4;
 
-    int offset = int(mCellImage.cols * 0.10);
+    int offset = int(mCellImage.cols * 0.15);
 
     cv::Rect roi(offset, offset,
                  mCellImage.cols - offset * 2, mCellImage.rows - offset * 2);
@@ -74,8 +74,15 @@ bool CellClassifier::isCross() {
     cv::Mat dst;
     cv::Canny(roiImg, dst, 50, 200, 3);
 
+    int morphSize = 3;
+    cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
+                                                     cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
+                                                     cv::Point(morphSize, morphSize));
+    cv::Mat dilated;
+    cv::dilate(dst, dilated, morphElement);
+
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dst, lines, 1, CV_PI / 180, 50, 50, 10);
+    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 50, 50, 10);
 
     for (auto &&l : lines) {
         cv::line(mCellImage, cv::Point(l[0] + offset, l[1] + offset), cv::Point(l[2] + offset, l[3] + offset),
