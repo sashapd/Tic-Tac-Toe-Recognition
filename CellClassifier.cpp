@@ -114,8 +114,8 @@ bool CellClassifier::isCross() {
         for (auto &&line2 : lines) {
             cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]);
             cv::Point p3(line2[0], line2[1]), p4(line2[2], line2[3]);
-            double angle1 = atan((line1[1] - line1[3]) / (line1[0] - line1[2]));
-            double angle2 = atan((line2[1] - line2[3]) / (line2[0] - line2[2]));
+            double angle1 = atan((line1[1] - line1[3]) / (line1[0] - line1[2] + 10e-8));
+            double angle2 = atan((line2[1] - line2[3]) / (line2[0] - line2[2] + 10e-8));
             if(doIntersect(p1, p2, p3, p4) && fabs(angle1 - angle2) > 0.785398) { // 0.785398 in radians = 45 degrees
                 areIntersecting = true;
             }
