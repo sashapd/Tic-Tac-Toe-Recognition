@@ -24,7 +24,7 @@ Cell CellClassifier::getCellValue() {
 }
 
 bool CellClassifier::isCircle() {
-    const int minRadius = mCellImage.cols / 3;
+    const int minRadius = mCellImage.cols / 5;
 
     cv::Mat grayImage;
     cv::cvtColor(mCellImage, grayImage, cv::COLOR_BGR2GRAY);
@@ -38,14 +38,14 @@ bool CellClassifier::isCircle() {
     cv::dilate(eroded, dilated, morphElement);
 
     cv::Mat blured;
-    cv::GaussianBlur(grayImage, blured, cv::Size(9, 9), 2, 2);
+    cv::GaussianBlur(dilated, blured, cv::Size(9, 9), 2, 2);
 
     std::vector<cv::Vec3f> circles;
 
     cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 30);
 
     for (auto &&circle : circles) {
-        if (circle[3] > minRadius) {
+        if (circle[2] > minRadius) {
             return true;
         }
     }
@@ -109,7 +109,7 @@ bool CellClassifier::isCross() {
             cv::Point p3(line2[0], line2[1]), p4(line2[2], line2[3]);
             double angle1 = atan((line1[1] - line1[3]) / (line1[0] - line1[2]));
             double angle2 = atan((line2[1] - line2[3]) / (line2[0] - line2[2]));
-            if(doIntersect(p1, p2, p3, p4) && fabs(angle1 - angle2) > 0.349066) { // 0.349066 in radians = 20 degrees
+            if(doIntersect(p1, p2, p3, p4) && fabs(angle1 - angle2) > 0.785398) { // 0.785398 in radians = 45 degrees
                 areIntersecting = true;
             }
         }
