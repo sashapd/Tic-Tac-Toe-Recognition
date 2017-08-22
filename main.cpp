@@ -7,34 +7,36 @@
 #include "GridDrawer.h"
 
 int main() {
-    cv::Mat im = cv::imread("board4.jpg");
-    cv::Mat image = im;
-    cv::resize(im, image, cv::Size(1000, 1000 * im.rows / im.cols));
+    cv::VideoCapture cap(0);
+    while((cv::waitKey(1) & 0xFF) != 27) {
+        cv::Mat image, im;
+        cap.read(im);
+        cv::resize(im, image, cv::Size(1000, 1000 * im.rows / im.cols));
 
-    GridExtractor extractor(image);
-    extractor.extractGrid();
+        GridExtractor extractor(image);
+        extractor.extractGrid();
 
-    if (!extractor.hasFoundGrid()) {
-        std::cout << "Grid not found" << std::endl;
-    } else {
-        Grid grid = extractor.getGrid();
-        GridDrawer drawer(grid);
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                Cell c = grid.getCellValue(j, i);
-                if (c == O) {
-                    drawer.drawCircle(j, i);
-                } else if (c == X) {
-                    drawer.drawCross(j, i);
+        if (!extractor.hasFoundGrid()) {
+            std::cout << "Grid not found" << std::endl;
+        } else {
+            Grid grid = extractor.getGrid();
+            GridDrawer drawer(grid);
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 3; j++) {
+                    Cell c = grid.getCellValue(j, i);
+                    if (c == O) {
+                        drawer.drawCircle(j, i);
+                    } else if (c == X) {
+                        drawer.drawCross(j, i);
+                    }
                 }
             }
+            extractor.putBackGrid(grid);
+            cv::Mat image = extractor.getImage();
+            cv::imshow("image", image);
         }
-        extractor.putBackGrid(grid);
-        cv::Mat im = extractor.getImage();
-        cv::resize(im, im, cv::Size(1000, 1000 * im.rows / im.cols));
-        cv::imshow("image", im);
-        cv::waitKey(0);
     }
+
 
     return 0;
 }
