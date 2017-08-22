@@ -6,6 +6,7 @@
 #include <iostream>
 #include "opencv2/imgproc.hpp"
 #include "GridExtractor.h"
+#include <functional>
 
 
 GridExtractor::GridExtractor(const cv::Mat &image) {

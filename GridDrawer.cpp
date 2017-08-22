@@ -44,6 +44,24 @@ void GridDrawer::drawWinnerLine(int x1, int y1, int x2, int y2, Cell winner) {
     cv::line(gridImage, p1, p2, color, 3);
 }
 
+void GridDrawer::drawGameState(GameState game_state)
+{
+	for (int row = 0; row < GameState::kRowCount; ++row)
+	{
+		for (int column = 0; column < GameState::kColumnsCount; ++column)
+		{
+			auto cell = game_state.getCell(row, column);
+			if (cell == O)
+			{
+				drawCircle(column, row);
+			} else
+			{
+				drawCircle(column, row);
+			}
+		}
+	}
+}
+
 void GridDrawer::emptyCell(cv::Mat cellImg) {
     int offset = cellImg.cols / 15;
     cv::Rect roi(offset, offset, cellImg.cols - offset * 2, cellImg.rows - offset * 2);

@@ -3,7 +3,6 @@
 //
 
 #include <opencv2/imgproc.hpp>
-#include <MacTypes.h>
 #include <opencv/cv.hpp>
 #include "CellClassifier.h"
 

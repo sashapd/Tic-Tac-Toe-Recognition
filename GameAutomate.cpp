@@ -1,4 +1,5 @@
 ﻿#include "GameAutomate.h"
+#include <iostream>
 
 GameAutomate::GameAutomate(Cell role) : role(role)
 {
@@ -15,6 +16,12 @@ GameState GameAutomate::makeTurn(GameState current_state)
 		current_state.getCellCountOfType(role == X ? O : X)
 		+ (role == X ? 1 : 0)
 		- current_state.getCellCountOfType(role);
+
+	if (moves_left != 1)
+	{
+		std::cout << "Move count: " << moves_left << std::endl;
+		return current_state;
+	}
 
 	return makeBestMove(current_state);
 }
