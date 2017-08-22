@@ -82,19 +82,15 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
 
     cv::Mat reflectionless = foreground - blured;
 
-    cv::imshow("f", reflectionless);
-
     cv::Mat canny_output;
     cv::Canny(reflectionless, canny_output, 40, 100, 3);
 
-    int dialationSize = 5;
+    int dialationSize = 6;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                          cv::Size(2 * dialationSize + 1, 2 * dialationSize + 1),
                                                          cv::Point(dialationSize, dialationSize));
     cv::Mat dilated;
     cv::dilate(canny_output, dilated, dialationElement);
-
-    cv::imshow("r", canny_output);
 
     std::vector<cv::Vec4i> lines;
     cv::HoughLinesP(dilated, lines, 3, CV_PI / 180, 50, mImage.rows / 10, 2);

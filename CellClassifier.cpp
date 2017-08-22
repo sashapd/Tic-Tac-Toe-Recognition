@@ -49,7 +49,7 @@ bool CellClassifier::isCircle() {
 
     std::vector<cv::Vec3f> circles;
 
-    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 30);
+    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 35);
 
     for (auto &&circle : circles) {
         if (circle[2] > minRadius) {
