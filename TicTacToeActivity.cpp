@@ -8,6 +8,7 @@
 void TicTacToeActivity::playUsing(cv::Mat img)
 {
 	play(img);
+	cv::waitKey(0);
 }
 
 void TicTacToeActivity::playUsing(cv::VideoCapture video_capture)

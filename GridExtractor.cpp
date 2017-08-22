@@ -71,8 +71,22 @@ void GridExtractor::putBackGrid(Grid grid) const {
 }
 
 std::vector<cv::Vec4i> GridExtractor::findLines() {
+    cv::Mat blured;
+    cv::GaussianBlur(mImage, blured, cv::Size(9, 9), 1.5);
+
+    cv::Mat foreground;
+    int morphSize = 10;
+    cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_RECT,
+                                                     cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
+                                                     cv::Point(morphSize, morphSize));
+    cv::morphologyEx(blured, foreground, cv::MORPH_CLOSE, morphElement);
+
+    cv::Mat reflectionless = foreground - blured;
+
+    cv::imshow("f", reflectionless);
+
     cv::Mat canny_output;
-    cv::Canny(mImage, canny_output, 50, 150, 3);
+    cv::Canny(reflectionless, canny_output, 40, 100, 3);
 
     int dialationSize = 5;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
@@ -80,6 +94,8 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
                                                          cv::Point(dialationSize, dialationSize));
     cv::Mat dilated;
     cv::dilate(canny_output, dilated, dialationElement);
+
+    cv::imshow("r", canny_output);
 
     std::vector<cv::Vec4i> lines;
     cv::HoughLinesP(dilated, lines, 3, CV_PI / 180, 50, mImage.rows / 10, 2);
