@@ -78,16 +78,21 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_RECT,
                                                      cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
                                                      cv::Point(morphSize, morphSize));
+
     cv::morphologyEx(blured, foreground, cv::MORPH_CLOSE, morphElement);
 
     cv::Mat reflectionless = foreground - blured;
 
+    cv::morphologyEx(blured, foreground, cv::MORPH_CLOSE, morphElement);
+
     cv::imshow("f", reflectionless);
+
+    cv::Mat reflectionless = foreground - blured;
 
     cv::Mat canny_output;
     cv::Canny(reflectionless, canny_output, 40, 100, 3);
 
-    int dialationSize = 5;
+    int dialationSize = 6;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                          cv::Size(2 * dialationSize + 1, 2 * dialationSize + 1),
                                                          cv::Point(dialationSize, dialationSize));
