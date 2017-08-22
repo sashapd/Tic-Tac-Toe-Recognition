@@ -8,26 +8,33 @@
 #include "CellClassifier.h"
 
 CellClassifier::CellClassifier(cv::Mat cellImage) {
-    mCellImage = cellImage;
+    cv::Mat foreground;
+    int morphSize = 5;
+    cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_RECT,
+                                                     cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
+                                                     cv::Point(morphSize, morphSize));
+    cv::morphologyEx(cellImage, foreground, cv::MORPH_CLOSE, morphElement);
+    cv::Mat white(cellImage.size(), cellImage.type());
+    white = cv::Scalar(255, 255, 255);
+
+    mReflectionless = white - (foreground - cellImage);
 }
 
 Cell CellClassifier::getCellValue() {
-    Cell value;
+    Cell value = NONE;
     if (isCircle()) {
         value = O;
     } else if (isCross()) {
         value = X;
-    } else {
-        value = NONE;
     }
     return value;
 }
 
 bool CellClassifier::isCircle() {
-    const int minRadius = mCellImage.cols / 5;
+    const int minRadius = mReflectionless.cols / 5;
 
     cv::Mat grayImage;
-    cv::cvtColor(mCellImage, grayImage, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(mReflectionless, grayImage, cv::COLOR_BGR2GRAY);
 
     int morphSize = 6;
     cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
@@ -72,13 +79,13 @@ bool CellClassifier::doIntersect(const cv::Point &p1, const cv::Point &q1, const
 }
 
 bool CellClassifier::isCross() {
-    const double minLength = mCellImage.cols / 3;
+    const double minLength = mReflectionless.cols / 3;
 
-    int offset = int(mCellImage.cols * 0.15);
+    int offset = int(mReflectionless.cols * 0.15);
 
     cv::Rect roi(offset, offset,
-                 mCellImage.cols - offset * 2, mCellImage.rows - offset * 2);
-    cv::Mat roiImg = mCellImage(roi);
+                 mReflectionless.cols - offset * 2, mReflectionless.rows - offset * 2);
+    cv::Mat roiImg = mReflectionless(roi);
 
     cv::Mat dst;
     cv::Canny(roiImg, dst, 50, 200, 3);

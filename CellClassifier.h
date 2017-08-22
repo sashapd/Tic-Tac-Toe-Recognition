@@ -16,7 +16,7 @@ public:
     Cell getCellValue();
 
 private:
-    cv::Mat mCellImage;
+    cv::Mat mReflectionless;
 
     bool isCircle();
 
