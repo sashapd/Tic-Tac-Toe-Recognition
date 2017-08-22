@@ -53,8 +53,26 @@ bool CellClassifier::isCircle() {
     return false;
 }
 
+int CellClassifier::orientation(const cv::Point &p, const cv::Point &q, const cv::Point &r) const {
+    int val = (q.y - p.y) * (r.x - q.x) -
+              (q.x - p.x) * (r.y - q.y);
+
+    return (val > 0) ? 1 : 2; // clock or counterclock wise
+}
+
+// function that returns true if line segment 'p1q1'
+// and 'p2q2' intersect.
+bool CellClassifier::doIntersect(const cv::Point &p1, const cv::Point &q1, const cv::Point &p2, const cv::Point &q2) const {
+    int o1 = orientation(p1, q1, p2);
+    int o2 = orientation(p1, q1, q2);
+    int o3 = orientation(p2, q2, p1);
+    int o4 = orientation(p2, q2, q1);
+
+    return (o1 != o2 && o3 != o4);
+}
+
 bool CellClassifier::isCross() {
-    const double minLength = mCellImage.cols / 4;
+    const double minLength = mCellImage.cols / 3;
 
     int offset = int(mCellImage.cols * 0.15);
 
@@ -82,5 +100,20 @@ bool CellClassifier::isCross() {
             filteredLines.push_back(line);
         }
     }
-    return filteredLines.size() >= 2;
+
+    //check proper intersection
+    bool areIntersecting = false;
+    for (auto &&line1 : lines) {
+        for (auto &&line2 : lines) {
+            cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]);
+            cv::Point p3(line2[0], line2[1]), p4(line2[2], line2[3]);
+            double angle1 = atan((line1[1] - line1[3]) / (line1[0] - line1[2]));
+            double angle2 = atan((line2[1] - line2[3]) / (line2[0] - line2[2]));
+            if(doIntersect(p1, p2, p3, p4) && fabs(angle1 - angle2) > 0.349066) { // 0.349066 in radians = 20 degrees
+                areIntersecting = true;
+            }
+        }
+    }
+
+    return areIntersecting;
 }
