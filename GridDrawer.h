@@ -16,8 +16,10 @@ public:
 	void drawCircle(int x, int y);
 
 	void drawCross(int x, int y);
+	void drawWinnerLine(GameState game_state);
 
 	void drawWinnerLine(int x1, int y1, int x2, int y2, Cell winner);
+	void drawCells(GameState game_state);
 
 	void drawGameState(GameState game_state);
 

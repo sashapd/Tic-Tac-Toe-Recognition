@@ -7,10 +7,13 @@ GameAutomate::GameAutomate(Cell role) : role(role)
 
 GameState GameAutomate::makeTurn(GameState current_state)
 {
-	if (current_state.isDraw()
-		|| current_state.isOsWin()
-		|| current_state.isXsWin())
+	return current_state;
+	if (current_state.isOsWin() 
+		|| current_state.isXsWin() 
+		|| current_state.isDraw())
+	{
 		return current_state;
+	}
 
 	int moves_left =
 		current_state.getCellCountOfType(role == X ? O : X)

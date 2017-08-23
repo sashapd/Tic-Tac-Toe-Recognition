@@ -78,7 +78,7 @@ bool CellClassifier::doIntersect(const cv::Point &p1, const cv::Point &q1, const
 }
 
 bool CellClassifier::isCross() {
-    const double minLength = mReflectionless.cols / 3;
+    const double minLength = mReflectionless.cols / 4;
 
     int offset = int(mReflectionless.cols * 0.15);
 
@@ -89,7 +89,9 @@ bool CellClassifier::isCross() {
     cv::Mat dst;
     cv::Canny(roiImg, dst, 50, 200, 3);
 
-    int morphSize = 3;
+	cv::imshow("temp1", dst);
+
+    int morphSize = 2;
     cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                      cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
                                                      cv::Point(morphSize, morphSize));
