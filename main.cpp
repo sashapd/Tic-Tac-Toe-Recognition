@@ -17,7 +17,7 @@ int main() {
         extractor.extractGrid();
 
         if (!extractor.hasFoundGrid()) {
-            std::cout << "Grid not found" << std::endl;
+            cv::imshow("image", image);
         } else {
             Grid grid = extractor.getGrid();
             GridDrawer drawer(grid);

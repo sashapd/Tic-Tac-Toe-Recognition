@@ -71,6 +71,8 @@ private:
 
     bool doIntersect(const cv::Point &p1, const cv::Point &q1, const cv::Point &p2, const cv::Point &q2) const;
 
+    double getLineAngle(const cv::Vec4i& line) const;
+
     std::vector<cv::Vec4i> getIntersectingLines(const cv::Vec4i &line, const std::vector<cv::Vec4i> &lines) const;
 
     std::vector<cv::Vec4i> getGridLines(const std::vector<cv::Vec4i> &lines) const;
