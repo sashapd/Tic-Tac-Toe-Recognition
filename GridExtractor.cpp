@@ -84,9 +84,9 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::Mat reflectionless = foreground - blured;
 
     cv::Mat canny_output;
-    cv::Canny(reflectionless, canny_output, 40, 100, 3);
+    cv::Canny(reflectionless, canny_output, 50, 150, 3);
 
-    int dialationSize = 6;
+    int dialationSize = 2;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                          cv::Size(2 * dialationSize + 1, 2 * dialationSize + 1),
                                                          cv::Point(dialationSize, dialationSize));
@@ -96,9 +96,13 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::imshow("r", dilated);
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 75, mImage.rows / 8, 4);
+    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 25, mImage.rows / 32, 1);
 
     lines = filterSimmilar(lines, 0.349066, 10);
+
+    for (auto &&line : lines) {
+        cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
+    }
 
     return lines;
 }
@@ -195,11 +199,14 @@ std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> 
                 //found four grid like intersecting lines lines
                 //check if they are pairs of relatively parallel lines
                 const double angleDiffThreshold = 0.610865; // 35 degrees
-                double angle1 = fabs(getLineAngle(line1));
-                double angle2 = fabs(getLineAngle(line2));
-                double angle3 = fabs(getLineAngle(common[0]));
-                double angle4 = fabs(getLineAngle(common[1]));
-                if (fabs(angle1 - angle2) < angleDiffThreshold && fabs(angle3 - angle4) < angleDiffThreshold) {
+                double angle1 = getLineAngle(line1);
+                double angle2 = getLineAngle(line2);
+                double angle3 = getLineAngle(common[0]);
+                double angle4 = getLineAngle(common[1]);
+                double line12Diff = fabs(angle1 - angle2);
+                double line34Diff = fabs(angle3 - angle4);
+                if ((line12Diff < angleDiffThreshold || line12Diff > CV_PI - angleDiffThreshold) &&
+                        (line34Diff < angleDiffThreshold || line34Diff > CV_PI - angleDiffThreshold) ) {
                     return std::vector<cv::Vec4i> {line1, common[0], line2, common[1]};
                 }
             }
