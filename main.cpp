@@ -8,7 +8,7 @@
 
 int main() {
     cv::VideoCapture cap(0);
-    while((cv::waitKey(1) & 0xFF) != 27) {
+    while ((cv::waitKey(1) & 0xFF) != 27) {
         cv::Mat image, im;
         cap.read(im);
         cv::resize(im, image, cv::Size(1000, 1000 * im.rows / im.cols));

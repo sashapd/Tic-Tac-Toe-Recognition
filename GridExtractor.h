@@ -32,7 +32,7 @@ private:
 
     std::vector<cv::Vec4i> findLines();
 
-    double getSlope(const cv::Vec4i &line) const;
+    static double getSlope(const cv::Vec4i &line);
 
     static bool compareLines(const cv::Vec4i &line1, const cv::Vec4i &line2) {
         double line1Length = pow(pow(line1[0] - line1[2], 2) + pow(line1[1] - line1[3], 2), 0.5);
@@ -64,6 +64,10 @@ private:
         int d2 = (b.x - center.x) * (b.x - center.x) + (b.y - center.y) * (b.y - center.y);
         return d1 > d2;
     }
+
+    static bool areSimmilar(cv::Vec4i line1, cv::Vec4i line2);
+
+    cv::Vec4i mergeLines(const std::vector<cv::Vec4i>& lines) const;
 
     std::vector<cv::Vec4i> filterSimmilar(std::vector<cv::Vec4i> lines, double angleThresh, double lengthThresh) const;
 

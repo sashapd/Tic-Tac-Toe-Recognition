@@ -86,59 +86,91 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::Mat canny_output;
     cv::Canny(reflectionless, canny_output, 50, 150, 3);
 
-    int dialationSize = 2;
+    int dialationSize = 3;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                          cv::Size(2 * dialationSize + 1, 2 * dialationSize + 1),
                                                          cv::Point(dialationSize, dialationSize));
     cv::Mat dilated;
     cv::dilate(canny_output, dilated, dialationElement);
 
-    cv::imshow("r", dilated);
+    cv::imshow("r", canny_output);
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 25, mImage.rows / 32, 1);
+    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 25, mImage.rows / 32, 2);
 
     lines = filterSimmilar(lines, 0.349066, 10);
-
+/*
     for (auto &&line : lines) {
         cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
     }
-
+*/
     return lines;
 }
 
-double GridExtractor::getSlope(const cv::Vec4i &line) const {
+double GridExtractor::getSlope(const cv::Vec4i &line) {
     return (double) (line[1] - line[3]) / (line[0] - line[2] + 10e-8);
+}
+
+bool GridExtractor::areSimmilar(cv::Vec4i line1, cv::Vec4i line2) {
+    cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]), p3(line2[0], line2[1]), p4(line2[2], line2[3]);
+    double length1 = cv::norm(p1 - p2);
+    double length2 = cv::norm(p3 - p4);
+    double dotProduct = (p2 - p1).dot(p4 - p3);
+
+    if (fabs(dotProduct / (length1 * length2)) < cos(CV_PI / 15))
+        return false;
+
+    const double maxLen = fmax(length1, length2);
+    const double lengthThresh = 10;
+
+    if (fabs(length1 - (cv::norm(p1 - p3) + cv::norm(p2 - p3))) < lengthThresh ||
+        fabs(length1 - (cv::norm(p1 - p4) + cv::norm(p2 - p4))) < lengthThresh ||
+        fabs(length2 - (cv::norm(p3 - p1) + cv::norm(p4 - p1))) < lengthThresh ||
+        fabs(length2 - (cv::norm(p3 - p2) + cv::norm(p4 - p2))) < lengthThresh) {
+        return true;
+    }
+
+    return false;
+}
+
+cv::Vec4i GridExtractor::mergeLines(const std::vector<cv::Vec4i> &lines) const {
+    std::vector<cv::Point2i> linePoints;
+    for (auto &&line : lines) {
+        linePoints.emplace_back(line[0], line[1]);
+        linePoints.emplace_back(line[2], line[3]);
+    }
+    std::vector<cv::Point2i> convexPoints;
+    cv::convexHull(linePoints, convexPoints);
+    double maxDist = 0;
+    cv::Vec4i maxLine;
+    for (auto &&point1 : convexPoints) {
+        for (auto &&point2 : convexPoints) {
+            double dist = cv::norm(point1 - point2);
+            if (dist > maxDist) {
+                maxDist = dist;
+                maxLine = cv::Vec4i(point1.x, point1.y, point2.x, point2.y);
+            }
+        }
+    }
+    return maxLine;
 }
 
 std::vector<cv::Vec4i>
 GridExtractor::filterSimmilar(std::vector<cv::Vec4i> lines, double angleThresh, double lengthThresh) const {
-    std::vector<cv::Vec4i> filtered;
-    std::sort(lines.begin(), lines.end(), compareLines);
+    std::vector<int> labels;
+    int numberOfLines = cv::partition(lines, labels, areSimmilar);
 
-    for (const auto &line : lines) {
-        cv::Point point1(line[0], line[1]), point2(line[2], line[3]);
-        double slope = getSlope(line);
-        double angle = fabs(atan(slope));
-        bool isSimmilar = false;
-        for (const auto &filteredLine : filtered) {
-            cv::Point p1(filteredLine[0], filteredLine[1]), p2(filteredLine[2], filteredLine[3]);
-            double filteredSlope = getSlope(filteredLine);
-            double filteredAngle = fabs(atan(filteredSlope));
-            double filteredLineLenth = cv::norm(p1 - p2);
-
-            if (fabs(angle - filteredAngle) < angleThresh &&
-                (fabs(filteredLineLenth - (cv::norm(p1 - point1) + cv::norm(p2 - point1))) < lengthThresh ||
-                 fabs(filteredLineLenth - (cv::norm(p1 - point2) + cv::norm(p2 - point2))) < lengthThresh)) {
-                isSimmilar = true;
-                break;
-            }
-        }
-        if (!isSimmilar) {
-            filtered.push_back(line);
-        }
+    std::vector<std::vector<cv::Vec4i>> linesToMerge(numberOfLines);
+    for (int i = 0; i < lines.size(); i++) {
+        linesToMerge[labels[i]].push_back(lines[i]);
     }
-    return filtered;
+
+    std::vector<cv::Vec4i> mergedLines;
+    for (int i = 0; i < linesToMerge.size(); i++) {
+        cv::Vec4i line = mergeLines(linesToMerge[i]);
+        mergedLines.push_back(line);
+    }
+    return mergedLines;
 }
 
 int GridExtractor::orientation(const cv::Point &p, const cv::Point &q, const cv::Point &r) const {
@@ -206,7 +238,7 @@ std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> 
                 double line12Diff = fabs(angle1 - angle2);
                 double line34Diff = fabs(angle3 - angle4);
                 if ((line12Diff < angleDiffThreshold || line12Diff > CV_PI - angleDiffThreshold) &&
-                        (line34Diff < angleDiffThreshold || line34Diff > CV_PI - angleDiffThreshold) ) {
+                    (line34Diff < angleDiffThreshold || line34Diff > CV_PI - angleDiffThreshold)) {
                     return std::vector<cv::Vec4i> {line1, common[0], line2, common[1]};
                 }
             }
