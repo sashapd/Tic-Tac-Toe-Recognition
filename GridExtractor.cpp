@@ -85,7 +85,7 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::Mat reflectionless = foreground - blured;
 
     cv::Mat canny_output;
-    cv::Canny(reflectionless, canny_output, 50, 150, 3);
+    cv::Canny(reflectionless, canny_output, 50, 75, 3);
 
     int dialationSize = 1;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
@@ -257,32 +257,36 @@ std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> 
         std::vector<cv::Vec4i> intersecting = getIntersectingLines(line, lines);
 
         if (intersecting.size() >= 2) {
-            cv::Vec4i line1 = intersecting[0];
-            cv::Vec4i line2 = intersecting[1];
+            for (int i = 0; i < intersecting.size() - 1; i++) {
+                cv::Vec4i line1 = intersecting[i];
+                cv::Vec4i line2 = intersecting[i+1];
 
-            std::vector<cv::Vec4i> line1Intersecting = getIntersectingLines(line1, lines);
-            std::vector<cv::Vec4i> line2Intersecting = getIntersectingLines(line2, lines);
+                std::vector<cv::Vec4i> line1Intersecting = getIntersectingLines(line1, lines);
+                std::vector<cv::Vec4i> line2Intersecting = getIntersectingLines(line2, lines);
 
-            //std::sort(line1Intersecting.begin(), line1Intersecting.end(), compareLines);
-            //std::sort(line2Intersecting.begin(), line2Intersecting.end(), compareLines);
+                //std::sort(line1Intersecting.begin(), line1Intersecting.end(), compareLines);
+                //std::sort(line2Intersecting.begin(), line2Intersecting.end(), compareLines);
 
-            std::vector<cv::Vec4i> common;
-            //getting common intersection lines
-            std::set_intersection(line1Intersecting.begin(), line1Intersecting.end(), line2Intersecting.begin(),
-                                  line2Intersecting.end(), std::back_inserter(common), compareLines);
-            if (common.size() >= 2) {
-                //found four grid like intersecting lines lines
-                //check if they are pairs of relatively parallel lines
-                const double angleDiffThreshold = 0.610865; // 35 degrees
-                double angle1 = getLineAngle(line1);
-                double angle2 = getLineAngle(line2);
-                double angle3 = getLineAngle(common[0]);
-                double angle4 = getLineAngle(common[1]);
-                double line12Diff = fabs(angle1 - angle2);
-                double line34Diff = fabs(angle3 - angle4);
-                if ((line12Diff < angleDiffThreshold || line12Diff > CV_PI - angleDiffThreshold) &&
-                    (line34Diff < angleDiffThreshold || line34Diff > CV_PI - angleDiffThreshold)) {
-                    return std::vector<cv::Vec4i> {line1, common[0], line2, common[1]};
+                std::vector<cv::Vec4i> common;
+                //getting common intersection lines
+                std::set_intersection(line1Intersecting.begin(), line1Intersecting.end(), line2Intersecting.begin(),
+                                      line2Intersecting.end(), std::back_inserter(common), compareLines);
+                if (common.size() >= 2) {
+                    //found four grid like intersecting lines lines
+                    //check if they are pairs of relatively parallel lines
+                    for (int j = 0; j < common.size() - 1; ++j) {
+                        const double angleDiffThreshold = 0.610865; // 35 degrees
+                        double angle1 = getLineAngle(line1);
+                        double angle2 = getLineAngle(line2);
+                        double angle3 = getLineAngle(common[j]);
+                        double angle4 = getLineAngle(common[j+1]);
+                        double line12Diff = fabs(angle1 - angle2);
+                        double line34Diff = fabs(angle3 - angle4);
+                        if ((line12Diff < angleDiffThreshold || line12Diff > CV_PI - angleDiffThreshold) &&
+                            (line34Diff < angleDiffThreshold || line34Diff > CV_PI - angleDiffThreshold)) {
+                            return std::vector<cv::Vec4i> {line1, common[0], line2, common[1]};
+                        }
+                    }
                 }
             }
         }
