@@ -96,7 +96,7 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::imshow("r", canny_output);
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 25, mImage.rows / 32, 2);
+    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 25, mImage.rows / 32, 1);
 
     lines = filterSimmilar(lines, 0.349066, 10);
 /*
@@ -111,17 +111,48 @@ double GridExtractor::getSlope(const cv::Vec4i &line) {
     return (double) (line[1] - line[3]) / (line[0] - line[2] + 10e-8);
 }
 
+bool GridExtractor::compareLines(const cv::Vec4i &line1, const cv::Vec4i &line2) {
+    double line1Length = pow(pow(line1[0] - line1[2], 2) + pow(line1[1] - line1[3], 2), 0.5);
+    double line2Length = pow(pow(line2[0] - line2[2], 2) + pow(line2[1] - line2[3], 2), 0.5);
+    return line1Length > line2Length;
+}
+
+bool GridExtractor::comparePointsClockwise(cv::Point a, cv::Point b, cv::Point center) {
+    if (a.x - center.x >= 0 && b.x - center.x < 0)
+        return true;
+    if (a.x - center.x < 0 && b.x - center.x >= 0)
+        return false;
+    if (a.x - center.x == 0 && b.x - center.x == 0) {
+        if (a.y - center.y >= 0 || b.y - center.y >= 0)
+            return a.y > b.y;
+        return b.y > a.y;
+    }
+
+    // compute the cross product of vectors (center -> a) x (center -> b)
+    int det = (a.x - center.x) * (b.y - center.y) - (b.x - center.x) * (a.y - center.y);
+    if (det < 0)
+        return true;
+    if (det > 0)
+        return false;
+
+    // points a and b are on the same line from the center
+    // check which point is closer to the center
+    int d1 = (a.x - center.x) * (a.x - center.x) + (a.y - center.y) * (a.y - center.y);
+    int d2 = (b.x - center.x) * (b.x - center.x) + (b.y - center.y) * (b.y - center.y);
+    return d1 > d2;
+}
+
 bool GridExtractor::areSimmilar(cv::Vec4i line1, cv::Vec4i line2) {
     cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]), p3(line2[0], line2[1]), p4(line2[2], line2[3]);
     double length1 = cv::norm(p1 - p2);
     double length2 = cv::norm(p3 - p4);
     double dotProduct = (p2 - p1).dot(p4 - p3);
 
-    if (fabs(dotProduct / (length1 * length2)) < cos(CV_PI / 15))
+    if (fabs(dotProduct / (length1 * length2)) < cos(CV_PI / 10))
         return false;
 
     const double maxLen = fmax(length1, length2);
-    const double lengthThresh = 10;
+    const double lengthThresh = 12;
 
     if (fabs(length1 - (cv::norm(p1 - p3) + cv::norm(p2 - p3))) < lengthThresh ||
         fabs(length1 - (cv::norm(p1 - p4) + cv::norm(p2 - p4))) < lengthThresh ||
