@@ -12,8 +12,6 @@ int main() {
 
 	TicTacToeActivity activity;
 
-	cv::VideoCapture video_capture;
-	video_capture.open(0);
 	activity.playUsing(img);
 
 	return 0;

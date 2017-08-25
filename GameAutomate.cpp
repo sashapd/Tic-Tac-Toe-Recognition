@@ -3,13 +3,13 @@
 
 GameAutomate::GameAutomate(Cell role) : role(role)
 {
+	srand(666);
 }
 
 GameState GameAutomate::makeTurn(GameState current_state)
 {
-	return current_state;
-	if (current_state.isOsWin() 
-		|| current_state.isXsWin() 
+	if (current_state.isOsWin()
+		|| current_state.isXsWin()
 		|| current_state.isDraw())
 	{
 		return current_state;
@@ -29,62 +29,105 @@ GameState GameAutomate::makeTurn(GameState current_state)
 	return makeBestMove(current_state);
 }
 
-int GameAutomate::negamax(GameState state, Cell role, Cell opponent_role) {
+Cell GameAutomate::getOpponentRole()
+{
+	return role == O ? X : O;
+}
 
-	int best_move_score = -9999;
-	int score_for_this_move = 0;
+bool GameAutomate::blockOpponentWinningMove(GameState& game_state)
+{
+	return makeWinningMove(game_state, getOpponentRole());
+}
 
-	if (state.isOsWin())
-		return role == O ? 1000 : -1000;
-	if (state.isXsWin())
-		return role == X ? 1000 : -1000;
+bool GameAutomate::checkForWinningMove(GameState game_state, int startX, int startY, int dx, int dy, Cell type)
+{
+	int count = 0;
+	for (int i = 0; i < 3; ++i)
+	{
+		auto cell = game_state.getCell(startY + dy * i, startX + dx * i);
+		if (cell == (type == O ? X : O))
+			return false;
+		if (cell == NONE)
+			count++;
+	}
+	return count == 1;
+}
 
-	for (int r = 0; r < 3; r++) {
-		for (int c = 0; c < 3; c++) {
-			if (state.getCell(r, c) == NONE) {
-				state.setCell(r, c, role);
-				score_for_this_move = -negamax(state, opponent_role, role);
-				state.setCell(r, c, NONE);
-				if (score_for_this_move >= best_move_score) {
-					best_move_score = score_for_this_move;
-				}
-			}
+void GameAutomate::fillLine(GameState& game_state, int x, int y, int dx, int dy, Cell type)
+{
+	for (int i = 0; i < 3; ++i)
+	{
+		auto cell = game_state.getCell(y + dy * i, x + dx * i);
+		if (cell == NONE)
+		{
+			game_state.setCell(y + dy * i, x + dx * i, role);
 		}
 	}
+}
 
-	if (best_move_score == -9999 || best_move_score == 0)
-		return 0;
+bool GameAutomate::makeWinningMove(GameState& game_state, Cell type)
+{
+	for (int r = 0; r < GameState::kRowCount; ++r)
+		if (checkForWinningMove(game_state, 0, r, 1, 0, type))
+		{
+			fillLine(game_state, 0, r, 1, 0, type);
+			return true;
+		}
+	for (int c = 0; c < GameState::kColumnsCount; ++c)
+		if (checkForWinningMove(game_state, c, 0, 0, 1, type))
+		{
+			fillLine(game_state, c, 0, 0, 1, type);
+			return true;
+		}
+	if (checkForWinningMove(game_state, 0, 0, 1, 1, type))
+	{
+		fillLine(game_state, 0, 0, 1, 1, type);
+		return true;
+	}
+	if (checkForWinningMove(game_state, 2, 0, -1, 1, type))
+	{
+		fillLine(game_state, 2, 0, -1, 1, type);
+		return true;
+	}
+	return false;
+}
 
-	if (best_move_score < 0)
-		return best_move_score + 1;
-	if (best_move_score > 0)
-		return best_move_score - 1;
+bool GameAutomate::makeAutomateWinningMove(GameState& game_state)
+{
+	return makeWinningMove(game_state, role);
+}
 
-	return 0;
+void GameAutomate::makeRandomMove(GameState& game_state)
+{
+	int pos = 1;
+	int seed = 0;
+	for (int i = 0; i < 3; i++)
+		for (int j = 0; j < 3; j++)
+		{
+			Cell cell = game_state.getCell(i, j);
+			int val = pos * pos;
+			seed += val * (cell == O ? 1 : cell == X ? -1 : 0);
+		}
+	srand(seed);
+	int skip = rand() % 9;
+	while (true)
+	{
+		for (int i = 0; i < 3; i++)
+			for (int j = 0; j < 3; j++)
+				if (skip-- <= 0 && game_state.getCell(i, j) == NONE)
+				{
+					game_state.setCell(j, i, role);
+					return;
+				}
+	}
 }
 
 GameState GameAutomate::makeBestMove(GameState game_state)
 {
-	int best_move_score = -9999;
-	int best_move_row = -9999;
-	int best_move_col = -9999;
-	int score_for_this_move = 0;
-
-	for (int r = 0; r < 3; r++) {
-		for (int c = 0; c < 3; c++) {
-			if (game_state.getCell(r, c) == NONE) {
-				game_state.setCell(r, c, role);
-				score_for_this_move = -negamax(game_state, getOpponentRole(), getRole());
-				game_state.setCell(r, c, NONE);
-				if (score_for_this_move >= best_move_score) {
-					best_move_score = score_for_this_move;
-					best_move_row = r;
-					best_move_col = c;
-				}
-			}
-		}
+	if (!makeAutomateWinningMove(game_state) && !blockOpponentWinningMove(game_state))
+	{
+		makeRandomMove(game_state);
 	}
-	game_state.setCell(best_move_row, best_move_col, role);
 	return game_state;
 }
 
@@ -92,9 +135,3 @@ Cell GameAutomate::getRole()
 {
 	return role;
 }
-
-Cell GameAutomate::getOpponentRole()
-{
-	return role == O ? X : O;
-}
-
