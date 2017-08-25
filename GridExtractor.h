@@ -38,9 +38,11 @@ private:
 
     static bool comparePointsClockwise(cv::Point a, cv::Point b, cv::Point center);
 
+    static double distToLine(const cv::Point &point, cv::Vec4i line);
+
     static bool areSimmilar(cv::Vec4i line1, cv::Vec4i line2);
 
-    cv::Vec4i mergeLines(const std::vector<cv::Vec4i>& lines) const;
+    cv::Vec4i mergeLines(const std::vector<cv::Vec4i> &lines) const;
 
     std::vector<cv::Vec4i> filterSimmilar(std::vector<cv::Vec4i> lines) const;
 
@@ -48,7 +50,7 @@ private:
 
     bool doIntersect(const cv::Point &p1, const cv::Point &q1, const cv::Point &p2, const cv::Point &q2) const;
 
-    double getLineAngle(const cv::Vec4i& line) const;
+    double getLineAngle(const cv::Vec4i &line) const;
 
     std::vector<cv::Vec4i> getIntersectingLines(const cv::Vec4i &line, const std::vector<cv::Vec4i> &lines) const;
 

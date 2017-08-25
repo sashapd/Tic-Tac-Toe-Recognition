@@ -97,13 +97,13 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::imshow("r", dilated);
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 1, CV_PI/180, 50, 50, 10 );
-/*
+    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 100, 50, 10);
+
+    lines = filterSimmilar(lines);
+
     for (auto &&line : lines) {
         cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
     }
-*/
-    lines = filterSimmilar(lines);
 
     return lines;
 }
@@ -143,6 +143,13 @@ bool GridExtractor::comparePointsClockwise(cv::Point a, cv::Point b, cv::Point c
     return d1 > d2;
 }
 
+double GridExtractor::distToLine(const cv::Point &point, cv::Vec4i line) {
+    double dist = fabs(
+            (line[3] - line[1]) * point.x - (line[2] - line[0]) * point.y + line[2] * line[1] - line[3] * line[0])
+                  / sqrt(pow(line[3] - line[1], 2) + pow(line[2] - line[0], 2));
+    return dist;
+}
+
 bool GridExtractor::areSimmilar(cv::Vec4i line1, cv::Vec4i line2) {
     cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]), p3(line2[0], line2[1]), p4(line2[2], line2[3]);
     double length1 = cv::norm(p1 - p2);
@@ -152,15 +159,20 @@ bool GridExtractor::areSimmilar(cv::Vec4i line1, cv::Vec4i line2) {
     if (fabs(dotProduct / (length1 * length2)) < cos(CV_PI / 10))
         return false;
 
-    const double lengthThresh = 12;
+    const double distThresh = 15;
+    const double lengthThresh = 25;
 
     if (fabs(length1 - (cv::norm(p1 - p3) + cv::norm(p2 - p3))) < lengthThresh ||
         fabs(length1 - (cv::norm(p1 - p4) + cv::norm(p2 - p4))) < lengthThresh ||
         fabs(length2 - (cv::norm(p3 - p1) + cv::norm(p4 - p1))) < lengthThresh ||
         fabs(length2 - (cv::norm(p3 - p2) + cv::norm(p4 - p2))) < lengthThresh) {
-        return true;
-    }
 
+        if (distToLine(p1, line2) < distThresh || distToLine(p2, line2) < distThresh ||
+            distToLine(p3, line1) < distThresh || distToLine(p4, line1) < distThresh) {
+            return true;
+        }
+
+    }
     return false;
 }
 
