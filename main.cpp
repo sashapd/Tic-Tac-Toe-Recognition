@@ -8,11 +8,14 @@
 #include "TicTacToeActivity.h"
 
 int main() {
-	cv::Mat img = cv::imread("sample2.png");
+	cv::Mat img = cv::imread("board1.jpg");
+
+    cv::VideoCapture videoCapture;
+    videoCapture.open(0);
 
 	TicTacToeActivity activity;
 
-	activity.playUsing(img);
+	activity.playUsing(videoCapture);
 
 	return 0;
 }

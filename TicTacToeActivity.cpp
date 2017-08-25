@@ -18,7 +18,7 @@ void TicTacToeActivity::playUsing(cv::VideoCapture video_capture)
 		std::cout << "Video caputre is not opened" << std::endl;
 		return;
 	}
-	while (cv::waitKey(30) != 27)
+	while (cv::waitKey(1) != 27)
 	{
 		cv::Mat frame;
 		video_capture >> frame;

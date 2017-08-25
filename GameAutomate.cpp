@@ -1,10 +1,7 @@
 ﻿#include "GameAutomate.h"
 #include <iostream>
 
-GameAutomate::GameAutomate(Cell role) : role(role)
-{
-	srand(666);
-}
+GameAutomate::GameAutomate(Cell role) : role(role) {}
 
 GameState GameAutomate::makeTurn(GameState current_state)
 {
