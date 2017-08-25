@@ -42,7 +42,7 @@ private:
 
     cv::Vec4i mergeLines(const std::vector<cv::Vec4i>& lines) const;
 
-    std::vector<cv::Vec4i> filterSimmilar(std::vector<cv::Vec4i> lines, double angleThresh, double lengthThresh) const;
+    std::vector<cv::Vec4i> filterSimmilar(std::vector<cv::Vec4i> lines) const;
 
     int orientation(const cv::Point &p, const cv::Point &q, const cv::Point &r) const;
 

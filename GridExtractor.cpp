@@ -86,24 +86,24 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::Mat canny_output;
     cv::Canny(reflectionless, canny_output, 50, 150, 3);
 
-    int dialationSize = 3;
+    int dialationSize = 1;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                          cv::Size(2 * dialationSize + 1, 2 * dialationSize + 1),
                                                          cv::Point(dialationSize, dialationSize));
     cv::Mat dilated;
     cv::dilate(canny_output, dilated, dialationElement);
 
-    cv::imshow("r", canny_output);
+    cv::imshow("r", dilated);
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 25, mImage.rows / 32, 1);
-
-    lines = filterSimmilar(lines, 0.349066, 10);
+    cv::HoughLinesP(dilated, lines, 1, CV_PI/180, 50, 50, 10 );
 /*
     for (auto &&line : lines) {
         cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
     }
 */
+    lines = filterSimmilar(lines);
+
     return lines;
 }
 
@@ -151,7 +151,6 @@ bool GridExtractor::areSimmilar(cv::Vec4i line1, cv::Vec4i line2) {
     if (fabs(dotProduct / (length1 * length2)) < cos(CV_PI / 10))
         return false;
 
-    const double maxLen = fmax(length1, length2);
     const double lengthThresh = 12;
 
     if (fabs(length1 - (cv::norm(p1 - p3) + cv::norm(p2 - p3))) < lengthThresh ||
@@ -187,7 +186,7 @@ cv::Vec4i GridExtractor::mergeLines(const std::vector<cv::Vec4i> &lines) const {
 }
 
 std::vector<cv::Vec4i>
-GridExtractor::filterSimmilar(std::vector<cv::Vec4i> lines, double angleThresh, double lengthThresh) const {
+GridExtractor::filterSimmilar(std::vector<cv::Vec4i> lines) const {
     std::vector<int> labels;
     int numberOfLines = cv::partition(lines, labels, areSimmilar);
 
