@@ -7,8 +7,11 @@
 #include <opencv/cv.hpp>
 #include "GridDrawer.h"
 
-GridDrawer::GridDrawer(Grid grid) : crossColor(255, 0, 0), circleColor(0, 0, 255) {
-    mGrid = grid;
+GridDrawer::GridDrawer(Grid grid) : 
+crossColor(255, 0, 0), 
+circleColor(0, 0, 255), 
+winningLineColor(0, 0, 0) {
+	mGrid = grid;
 }
 
 void GridDrawer::drawCircle(int x, int y) {
@@ -36,13 +39,12 @@ void GridDrawer::drawWinnerLine(GameState game_state) {
 	}
 	std::vector<int> line_points = game_state.isOsWin() 
 		? game_state.getCompleteLineFor(O) : game_state.getCompleteLineFor(X);
-	cv::Scalar color = game_state.isOsWin() ? circleColor : crossColor;
     cv::Mat gridImage = mGrid.getImage();
     int cellWidth = gridImage.cols / 3;
     int cellHeigh = gridImage.rows / 3;
 	cv::Point p1(line_points[0] * cellWidth + cellWidth / 2, line_points[1] * cellHeigh + cellHeigh / 2);
     cv::Point p2(line_points[2] * cellWidth + cellWidth / 2, line_points[3] * cellHeigh + cellHeigh / 2);
-    cv::line(gridImage, p1, p2, color, 3);
+	cv::line(gridImage, p1, p2, winningLineColor, 6);
 }
 
 void GridDrawer::drawCells(GameState game_state)

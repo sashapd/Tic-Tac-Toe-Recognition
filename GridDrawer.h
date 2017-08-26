@@ -27,6 +27,7 @@ private:
 	Grid mGrid;
 	const cv::Scalar crossColor;
 	const cv::Scalar circleColor;
+	const cv::Scalar winningLineColor;
 
 	void emptyCell(cv::Mat cell);
 };

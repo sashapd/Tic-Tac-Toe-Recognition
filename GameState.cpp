@@ -63,7 +63,7 @@ std::vector<int> GameState::getCompleteLineFor(Cell type)
 			return getLine(0, r, 1, 0);
 	for (int c = 0; c < kColumnsCount; ++c)
 		if (checkLine(c, 0, 0, 1, type))
-			return getLine(c, 0, 1, 0);
+			return getLine(c, 0, 0, 1);
 	if (checkLine(0, 0, 1, 1, type))
 		return getLine(0, 0, 1, 1);
 	if (checkLine(2, 0, -1, 1, type))
@@ -96,7 +96,7 @@ std::vector<int> GameState::getLine(int xStart, int yStart, int dx, int dy)
 	std::vector<int> result;
 	result.push_back(yStart);
 	result.push_back(xStart);
-	result.push_back(yStart + dx * 2);
-	result.push_back(xStart + dy * 2);
+	result.push_back(yStart + dy * 2);
+	result.push_back(xStart + dx * 2);
 	return result;
 }
