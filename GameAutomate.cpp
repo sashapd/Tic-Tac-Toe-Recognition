@@ -105,7 +105,7 @@ void GameAutomate::makeRandomMove(GameState& game_state)
 			int val = pos * pos;
 			seed += val * (cell == O ? 1 : cell == X ? -1 : 0);
 		}
-	srand(seed);
+	srand(seed + 5);
 	int skip = rand() % 9;
 	while (true)
 	{
