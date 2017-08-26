@@ -11,7 +11,7 @@ void TicTacToeActivity::playUsing(cv::Mat img)
 	cv::waitKey(0);
 }
 
-void TicTacToeActivity::playUsing(cv::VideoCapture video_capture)
+void TicTacToeActivity::playUsing(cv::VideoCapture& video_capture)
 {
 	if (!video_capture.isOpened())
 	{
@@ -22,6 +22,8 @@ void TicTacToeActivity::playUsing(cv::VideoCapture video_capture)
 	{
 		cv::Mat frame;
 		video_capture >> frame;
+        video_capture >> frame;
+        video_capture >> frame;
 		play(frame);
 	}
 }

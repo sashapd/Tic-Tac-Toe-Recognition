@@ -10,7 +10,7 @@ class TicTacToeActivity
 public:
 	void playUsing(cv::Mat img);
 
-	void playUsing(cv::VideoCapture video_capture);
+	void playUsing(cv::VideoCapture& video_capture);
 
 private:
 	void play(cv::Mat img);
