@@ -71,18 +71,15 @@ void GridExtractor::putBackGrid(Grid grid) const {
 }
 
 std::vector<cv::Vec4i> GridExtractor::findLines() {
-    cv::Mat blured;
-    cv::GaussianBlur(mImage, blured, cv::Size(9, 9), 1.5);
-
     cv::Mat foreground;
     int morphSize = 10;
     cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_RECT,
                                                      cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
                                                      cv::Point(morphSize, morphSize));
 
-    cv::morphologyEx(blured, foreground, cv::MORPH_CLOSE, morphElement);
+    cv::morphologyEx(mImage, foreground, cv::MORPH_CLOSE, morphElement);
 
-    cv::Mat reflectionless = foreground - blured;
+    cv::Mat reflectionless = foreground - mImage;
 
     cv::Mat canny_output;
     cv::Canny(reflectionless, canny_output, 50, 75, 3);
