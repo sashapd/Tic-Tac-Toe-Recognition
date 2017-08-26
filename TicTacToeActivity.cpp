@@ -24,7 +24,10 @@ void TicTacToeActivity::playUsing(cv::VideoCapture& video_capture)
 		video_capture >> frame;
         video_capture >> frame;
         video_capture >> frame;
-		play(frame);
+		if (!frame.empty())
+		{
+			play(frame);
+		}
 	}
 }
 
