@@ -23,11 +23,12 @@ public:
 
 	void drawGameState(GameState game_state);
 
+	static const cv::Scalar kCrossColor;
+	static const cv::Scalar kCircleColor;
+	static const cv::Scalar kWinningLineColor;
+
 private:
 	Grid mGrid;
-	const cv::Scalar crossColor;
-	const cv::Scalar circleColor;
-	const cv::Scalar winningLineColor;
 
 	void emptyCell(cv::Mat cell);
 };

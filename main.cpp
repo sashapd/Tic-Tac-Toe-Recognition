@@ -8,7 +8,7 @@
 #include "TicTacToeActivity.h"
 
 int main() {
-	cv::Mat img = cv::imread("sample1.png");
+	cv::Mat img = cv::imread("sample4.jpg");
 
 	TicTacToeActivity activity;
 

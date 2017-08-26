@@ -7,6 +7,7 @@
 #include "opencv2/imgproc.hpp"
 #include "GridExtractor.h"
 #include <functional>
+#include "GridDrawer.h"
 
 
 GridExtractor::GridExtractor(const cv::Mat &image) {
@@ -66,8 +67,16 @@ void GridExtractor::putBackGrid(Grid grid) const {
     cv::warpPerspective(gridImage, foreground, transformMatr, foreground.size());
 
     cv::Mat mask = foreground > 0;
+	cv::Mat addedElementsMask;
+	cv::inRange(mask, GridDrawer::kCrossColor, GridDrawer::kCrossColor, addedElementsMask);
+	mask = mask.setTo(cv::Scalar{ 255, 255, 255 }, addedElementsMask);
+	cv::inRange(mask, GridDrawer::kCircleColor, GridDrawer::kCircleColor, addedElementsMask);
+	mask = mask.setTo(cv::Scalar{ 255, 255, 255 }, addedElementsMask);
+	cv::inRange(mask, GridDrawer::kWinningLineColor, GridDrawer::kWinningLineColor, addedElementsMask);
+	mask = mask.setTo(cv::Scalar{ 255, 255, 255 }, addedElementsMask);
 
     foreground.copyTo(mImage, mask);
+	cv::imshow("TEMP", mask);
 }
 
 std::vector<cv::Vec4i> GridExtractor::findLines() {
@@ -101,9 +110,9 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
 
     lines = filterSimmilar(lines);
 
-    for (auto &&line : lines) {
-        cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
-    }
+    //for (auto &&line : lines) {
+        //cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
+    //}
 
     return lines;
 }

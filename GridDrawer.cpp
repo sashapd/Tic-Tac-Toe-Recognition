@@ -7,10 +7,11 @@
 #include <opencv/cv.hpp>
 #include "GridDrawer.h"
 
-GridDrawer::GridDrawer(Grid grid) : 
-crossColor(255, 0, 0), 
-circleColor(0, 0, 255), 
-winningLineColor(0, 0, 0) {
+const cv::Scalar GridDrawer::kCrossColor{ 19, 71, 217 };
+const cv::Scalar GridDrawer::kWinningLineColor{ 61, 57, 55 };
+const cv::Scalar GridDrawer::kCircleColor{ 193, 109, 34 };
+
+GridDrawer::GridDrawer(Grid grid) {
 	mGrid = grid;
 }
 
@@ -19,7 +20,7 @@ void GridDrawer::drawCircle(int x, int y) {
     emptyCell(cellImg);
     int radius = cellImg.cols * 0.35;
     cv::Point center(cellImg.cols / 2, cellImg.rows / 2);
-    cv::circle(cellImg, center, radius, circleColor, 3);
+    cv::circle(cellImg, center, radius, kCircleColor, 6);
 }
 
 void GridDrawer::drawCross(int x, int y) {
@@ -28,15 +29,12 @@ void GridDrawer::drawCross(int x, int y) {
     int offset = cellImg.cols * 0.2;
     cv::Point p1(offset, offset), p2(cellImg.cols - offset, cellImg.rows - offset);
     cv::Point p3(offset, cellImg.rows - offset), p4(cellImg.cols - offset, offset);
-    cv::line(cellImg, p1, p2, crossColor, 3);
-    cv::line(cellImg, p3, p4, crossColor, 3);
+    cv::line(cellImg, p1, p2, kCrossColor, 6);
+    cv::line(cellImg, p3, p4, kCrossColor, 6);
 }
 
 void GridDrawer::drawWinnerLine(GameState game_state) {
-	if (!game_state.isOsWin() && !game_state.isXsWin())
-	{
-		return;
-	}
+	if (!game_state.isOsWin() && !game_state.isXsWin()) return;
 	std::vector<int> line_points = game_state.isOsWin() 
 		? game_state.getCompleteLineFor(O) : game_state.getCompleteLineFor(X);
     cv::Mat gridImage = mGrid.getImage();
@@ -44,29 +42,22 @@ void GridDrawer::drawWinnerLine(GameState game_state) {
     int cellHeigh = gridImage.rows / 3;
 	cv::Point p1(line_points[0] * cellWidth + cellWidth / 2, line_points[1] * cellHeigh + cellHeigh / 2);
     cv::Point p2(line_points[2] * cellWidth + cellWidth / 2, line_points[3] * cellHeigh + cellHeigh / 2);
-	cv::line(gridImage, p1, p2, winningLineColor, 6);
+	cv::line(gridImage, p1, p2, kWinningLineColor, 6);
 }
 
-void GridDrawer::drawCells(GameState game_state)
-{
-	for (int row = 0; row < GameState::kRowCount; ++row)
-	{
-		for (int column = 0; column < GameState::kColumnsCount; ++column)
-		{
+void GridDrawer::drawCells(GameState game_state) {
+	for (int row = 0; row < GameState::kRowCount; ++row) {
+		for (int column = 0; column < GameState::kColumnsCount; ++column) {
 			auto cell = game_state.getCell(row, column);
 			if (cell == O)
-			{
 				drawCircle(row, column);
-			} else if (cell == X)
-			{
+			else if (cell == X)
 				drawCross(row, column);
-			}
 		}
 	}
 }
 
-void GridDrawer::drawGameState(GameState game_state)
-{
+void GridDrawer::drawGameState(GameState game_state) {
 	drawCells(game_state);
 	drawWinnerLine(game_state);
 }
