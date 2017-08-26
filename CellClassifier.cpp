@@ -87,7 +87,7 @@ bool CellClassifier::isCross() {
     cv::Mat roiImg = mReflectionless(roi);
 
     cv::Mat dst;
-    cv::Canny(roiImg, dst, 50, 200, 3);
+    cv::Canny(roiImg, dst, 10, 100, 3);
 
 	cv::imshow("temp1", dst);
 
@@ -115,9 +115,10 @@ bool CellClassifier::isCross() {
         for (auto &&line2 : lines) {
             cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]);
             cv::Point p3(line2[0], line2[1]), p4(line2[2], line2[3]);
-            double angle1 = atan((line1[1] - line1[3]) / (line1[0] - line1[2] + 10e-8));
-            double angle2 = atan((line2[1] - line2[3]) / (line2[0] - line2[2] + 10e-8));
-            if(doIntersect(p1, p2, p3, p4) && fabs(angle1 - angle2) > 0.785398) { // 0.785398 in radians = 45 degrees
+            double dotProduct = (p1 - p2).dot(p3 - p4);
+            double length1 = cv::norm(p1 - p2);
+            double length2 = cv::norm(p3 - p4);
+            if(doIntersect(p1, p2, p3, p4) && fabs((dotProduct / (length1 * length2))) < cos(CV_PI / 2 -  0.785398)) { // 0.785398 in radians = 45 degrees
                 areIntersecting = true;
             }
         }
