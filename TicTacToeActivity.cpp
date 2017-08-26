@@ -4,7 +4,6 @@
 #include "GridExtractor.h"
 #include "GameAutomate.h"
 #include "TicTacToeActivity.h"
-#include "TimingLogger.h"
 
 void TicTacToeActivity::playUsing(cv::Mat img)
 {
@@ -38,7 +37,6 @@ void TicTacToeActivity::play(cv::Mat img)
 	resize(img, image, cv::Size(1000, 1000 * img.rows / img.cols));
 	GridExtractor extractor(image);
 	extractor.extractGrid();
-	TimingLogger::getInstance()->enableLogger();
 
 	if (!extractor.hasFoundGrid())
 	{
@@ -47,12 +45,10 @@ void TicTacToeActivity::play(cv::Mat img)
 	}
 	else
 	{
-		TimingLogger::getInstance()->onTaskStart("Frame decoding");
 		Grid grid = extractor.getGrid();
 		GridDrawer drawer(grid);
-		GameAutomate game_automate(X);
+		GameAutomate game_automate(O);
 		drawer.drawGameState(game_automate.makeTurn(grid.getGameState()));
-		TimingLogger::getInstance()->onTaskEnd("Frame decoding");
 		extractor.putBackGrid(grid);
 		cv::Mat im = extractor.getImage();
 		resize(im, im, cv::Size(1000, 1000 * im.rows / im.cols));
