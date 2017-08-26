@@ -105,7 +105,7 @@ void GameAutomate::makeRandomMove(GameState& game_state)
 			int val = pos * pos;
 			seed += val * (cell == O ? 1 : cell == X ? -1 : 0);
 		}
-	srand(seed);
+	srand(seed + 5);
 	int skip = rand() % 9;
 	while (true)
 	{
@@ -113,7 +113,7 @@ void GameAutomate::makeRandomMove(GameState& game_state)
 			for (int j = 0; j < 3; j++)
 				if (skip-- <= 0 && game_state.getCell(i, j) == NONE)
 				{
-					game_state.setCell(j, i, role);
+					game_state.setCell(i, j, role);
 					return;
 				}
 	}
