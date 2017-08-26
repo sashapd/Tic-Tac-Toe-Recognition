@@ -97,6 +97,7 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
                                                          cv::Size(2 * dialationSize + 1, 2 * dialationSize + 1),
                                                          cv::Point(dialationSize, dialationSize));
     cv::Mat dilated;
+    cv::dilate(canny_output, dilated, dialationElement);
 
     std::vector<cv::Vec4i> lines;
     cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 100, 50, 10);
