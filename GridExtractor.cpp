@@ -98,10 +98,6 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
 
     lines = filterSimmilar(lines);
 
-    for (auto &&line : lines) {
-        cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
-    }
-
     return lines;
 }
 
