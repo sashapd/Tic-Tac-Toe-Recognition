@@ -4,6 +4,7 @@
 #include "GridExtractor.h"
 #include "GameAutomate.h"
 #include "TicTacToeActivity.h"
+#include "TimingLogger.h"
 
 void TicTacToeActivity::playUsing(cv::Mat img)
 {
@@ -22,8 +23,8 @@ void TicTacToeActivity::playUsing(cv::VideoCapture& video_capture)
 	{
 		cv::Mat frame;
 		video_capture >> frame;
-        video_capture >> frame;
-        video_capture >> frame;
+		video_capture >> frame;
+		video_capture >> frame;
 		if (!frame.empty())
 		{
 			play(frame);
@@ -34,21 +35,24 @@ void TicTacToeActivity::playUsing(cv::VideoCapture& video_capture)
 void TicTacToeActivity::play(cv::Mat img)
 {
 	cv::Mat image = img;
-	cv::resize(img, image, cv::Size(1000, 1000 * img.rows / img.cols));
-    GridExtractor extractor(image);
+	resize(img, image, cv::Size(1000, 1000 * img.rows / img.cols));
+	GridExtractor extractor(image);
 	extractor.extractGrid();
+	TimingLogger::getInstance()->enableLogger();
 
 	if (!extractor.hasFoundGrid())
 	{
 		std::cout << "Grid not found" << std::endl;
-		cv::imshow("image", image);
+		imshow("image", image);
 	}
 	else
 	{
+		TimingLogger::getInstance()->onTaskStart("Frame decoding");
 		Grid grid = extractor.getGrid();
 		GridDrawer drawer(grid);
-	    GameAutomate game_automate(O);
+		GameAutomate game_automate(X);
 		drawer.drawGameState(game_automate.makeTurn(grid.getGameState()));
+		TimingLogger::getInstance()->onTaskEnd("Frame decoding");
 		extractor.putBackGrid(grid);
 		cv::Mat im = extractor.getImage();
 		resize(im, im, cv::Size(1000, 1000 * im.rows / im.cols));
