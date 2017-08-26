@@ -21,10 +21,10 @@ CellClassifier::CellClassifier(cv::Mat cellImage) {
 
 Cell CellClassifier::getCellValue() {
     Cell value = NONE;
-    if (isCross()) {
-        value = X;
-    } else if (isCircle()) {
+    if (isCircle()) {
         value = O;
+    } else if (isCross()) {
+        value = X;
     }
     return value;
 }
@@ -48,7 +48,7 @@ bool CellClassifier::isCircle() {
 
     std::vector<cv::Vec3f> circles;
 
-    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 25);
+    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 30);
 
     for (auto &&circle : circles) {
         if (circle[2] > minRadius) {
@@ -91,7 +91,7 @@ bool CellClassifier::isCross() {
 
 	cv::imshow("temp1", dst);
 
-    int morphSize = 2;
+    int morphSize = 4;
     cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                      cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
                                                      cv::Point(morphSize, morphSize));
@@ -99,7 +99,7 @@ bool CellClassifier::isCross() {
     cv::dilate(dst, dilated, morphElement);
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 50, 50, 10);
+    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 50, 50, 2);
 
     std::vector<cv::Vec4i> filteredLines;
     for (auto &&line : lines) {
@@ -118,7 +118,7 @@ bool CellClassifier::isCross() {
             double dotProduct = (p1 - p2).dot(p3 - p4);
             double length1 = cv::norm(p1 - p2);
             double length2 = cv::norm(p3 - p4);
-            if(doIntersect(p1, p2, p3, p4) && fabs((dotProduct / (length1 * length2))) < cos(CV_PI / 2 -  0.523599)) { // 0.785398 in radians = 45 degrees
+            if(doIntersect(p1, p2, p3, p4) && fabs((dotProduct / (length1 * length2))) < cos(CV_PI / 2 -  0.785398 )) { // 0.785398 in radians = 45 degrees
                 areIntersecting = true;
             }
         }
