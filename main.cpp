@@ -5,36 +5,17 @@
 #include <opencv2/core/mat.hpp>
 #include "GridExtractor.h"
 #include "GridDrawer.h"
+#include "TicTacToeActivity.h"
 
 int main() {
-    cv::Mat im = cv::imread("board4.jpg");
-    cv::Mat image = im;
-    cv::resize(im, image, cv::Size(1000, 1000 * im.rows / im.cols));
+	cv::Mat img = cv::imread("board1.jpg");
 
-    GridExtractor extractor(image);
-    extractor.extractGrid();
+    cv::VideoCapture videoCapture;
+    videoCapture.open(0);
 
-    if (!extractor.hasFoundGrid()) {
-        std::cout << "Grid not found" << std::endl;
-    } else {
-        Grid grid = extractor.getGrid();
-        GridDrawer drawer(grid);
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                Cell c = grid.getCellValue(j, i);
-                if (c == O) {
-                    drawer.drawCircle(j, i);
-                } else if (c == X) {
-                    drawer.drawCross(j, i);
-                }
-            }
-        }
-        extractor.putBackGrid(grid);
-        cv::Mat im = extractor.getImage();
-        cv::resize(im, im, cv::Size(1000, 1000 * im.rows / im.cols));
-        cv::imshow("image", im);
-        cv::waitKey(0);
-    }
+	TicTacToeActivity activity;
 
-    return 0;
+	activity.playUsing(videoCapture);
+
+	return 0;
 }

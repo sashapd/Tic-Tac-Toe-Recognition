@@ -6,6 +6,7 @@
 #include <iostream>
 #include "opencv2/imgproc.hpp"
 #include "GridExtractor.h"
+#include <functional>
 
 
 GridExtractor::GridExtractor(const cv::Mat &image) {
@@ -78,60 +79,141 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_RECT,
                                                      cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
                                                      cv::Point(morphSize, morphSize));
+
     cv::morphologyEx(blured, foreground, cv::MORPH_CLOSE, morphElement);
 
     cv::Mat reflectionless = foreground - blured;
 
     cv::Mat canny_output;
-    cv::Canny(reflectionless, canny_output, 40, 100, 3);
+    cv::Canny(reflectionless, canny_output, 50, 75, 3);
 
-    int dialationSize = 6;
+    int dialationSize = 1;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                          cv::Size(2 * dialationSize + 1, 2 * dialationSize + 1),
                                                          cv::Point(dialationSize, dialationSize));
     cv::Mat dilated;
     cv::dilate(canny_output, dilated, dialationElement);
 
-    std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 3, CV_PI / 180, 50, mImage.rows / 10, 2);
+    cv::imshow("r", dilated);
 
-    lines = filterSimmilar(lines, 0.349066, 10);
+    std::vector<cv::Vec4i> lines;
+    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 100, 50, 10);
+
+    lines = filterSimmilar(lines);
+
+    for (auto &&line : lines) {
+        cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
+    }
 
     return lines;
 }
 
-double GridExtractor::getSlope(const cv::Vec4i &line) const {
-    return (double) (line[1] - line[3]) / (line[0] - line[2]);
+double GridExtractor::getSlope(const cv::Vec4i &line) {
+    return (double) (line[1] - line[3]) / (line[0] - line[2] + 10e-8);
+}
+
+bool GridExtractor::compareLines(const cv::Vec4i &line1, const cv::Vec4i &line2) {
+    double line1Length = pow(pow(line1[0] - line1[2], 2) + pow(line1[1] - line1[3], 2), 0.5);
+    double line2Length = pow(pow(line2[0] - line2[2], 2) + pow(line2[1] - line2[3], 2), 0.5);
+    return line1Length > line2Length;
+}
+
+bool GridExtractor::comparePointsClockwise(cv::Point a, cv::Point b, cv::Point center) {
+    if (a.x - center.x >= 0 && b.x - center.x < 0)
+        return true;
+    if (a.x - center.x < 0 && b.x - center.x >= 0)
+        return false;
+    if (a.x - center.x == 0 && b.x - center.x == 0) {
+        if (a.y - center.y >= 0 || b.y - center.y >= 0)
+            return a.y > b.y;
+        return b.y > a.y;
+    }
+
+    // compute the cross product of vectors (center -> a) x (center -> b)
+    int det = (a.x - center.x) * (b.y - center.y) - (b.x - center.x) * (a.y - center.y);
+    if (det < 0)
+        return true;
+    if (det > 0)
+        return false;
+
+    // points a and b are on the same line from the center
+    // check which point is closer to the center
+    int d1 = (a.x - center.x) * (a.x - center.x) + (a.y - center.y) * (a.y - center.y);
+    int d2 = (b.x - center.x) * (b.x - center.x) + (b.y - center.y) * (b.y - center.y);
+    return d1 > d2;
+}
+
+double GridExtractor::distToLine(const cv::Point &point, cv::Vec4i line) {
+    double dist = fabs(
+            (line[3] - line[1]) * point.x - (line[2] - line[0]) * point.y + line[2] * line[1] - line[3] * line[0])
+                  / sqrt(pow(line[3] - line[1], 2) + pow(line[2] - line[0], 2));
+    return dist;
+}
+
+bool GridExtractor::areSimmilar(cv::Vec4i line1, cv::Vec4i line2) {
+    cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]), p3(line2[0], line2[1]), p4(line2[2], line2[3]);
+    double length1 = cv::norm(p1 - p2);
+    double length2 = cv::norm(p3 - p4);
+    double dotProduct = (p2 - p1).dot(p4 - p3);
+
+    if (fabs(dotProduct / (length1 * length2)) < cos(CV_PI / 10))
+        return false;
+
+    const double distThresh = 15;
+    const double lengthThresh = 25;
+
+    if (fabs(length1 - (cv::norm(p1 - p3) + cv::norm(p2 - p3))) < lengthThresh ||
+        fabs(length1 - (cv::norm(p1 - p4) + cv::norm(p2 - p4))) < lengthThresh ||
+        fabs(length2 - (cv::norm(p3 - p1) + cv::norm(p4 - p1))) < lengthThresh ||
+        fabs(length2 - (cv::norm(p3 - p2) + cv::norm(p4 - p2))) < lengthThresh) {
+
+        if (distToLine(p1, line2) < distThresh || distToLine(p2, line2) < distThresh ||
+            distToLine(p3, line1) < distThresh || distToLine(p4, line1) < distThresh) {
+            return true;
+        }
+
+    }
+    return false;
+}
+
+cv::Vec4i GridExtractor::mergeLines(const std::vector<cv::Vec4i> &lines) const {
+    std::vector<cv::Point2i> linePoints;
+    for (auto &&line : lines) {
+        linePoints.emplace_back(line[0], line[1]);
+        linePoints.emplace_back(line[2], line[3]);
+    }
+    std::vector<cv::Point2i> convexPoints;
+    cv::convexHull(linePoints, convexPoints);
+    double maxDist = 0;
+    cv::Vec4i maxLine;
+    for (auto &&point1 : convexPoints) {
+        for (auto &&point2 : convexPoints) {
+            double dist = cv::norm(point1 - point2);
+            if (dist > maxDist) {
+                maxDist = dist;
+                maxLine = cv::Vec4i(point1.x, point1.y, point2.x, point2.y);
+            }
+        }
+    }
+    return maxLine;
 }
 
 std::vector<cv::Vec4i>
-GridExtractor::filterSimmilar(std::vector<cv::Vec4i> lines, double angleThresh, double lengthThresh) const {
-    std::vector<cv::Vec4i> filtered;
-    std::sort(lines.begin(), lines.end(), compareLines);
+GridExtractor::filterSimmilar(std::vector<cv::Vec4i> lines) const {
+    std::vector<int> labels;
+    int numberOfLines = cv::partition(lines, labels, areSimmilar);
 
-    for (const auto &line : lines) {
-        cv::Point point1(line[0], line[1]), point2(line[2], line[3]);
-        double slope = getSlope(line);
-        double angle = fabs(atan(slope));
-        bool isSimmilar = false;
-        for (const auto &filteredLine : filtered) {
-            cv::Point p1(filteredLine[0], filteredLine[1]), p2(filteredLine[2], filteredLine[3]);
-            double filteredSlope = getSlope(filteredLine);
-            double filteredAngle = fabs(atan(filteredSlope));
-            double filteredLineLenth = cv::norm(p1 - p2);
-
-            if (fabs(angle - filteredAngle) < angleThresh &&
-                (fabs(filteredLineLenth - (cv::norm(p1 - point1) + cv::norm(p2 - point1))) < lengthThresh ||
-                 fabs(filteredLineLenth - (cv::norm(p1 - point2) + cv::norm(p2 - point2))) < lengthThresh)) {
-                isSimmilar = true;
-                break;
-            }
-        }
-        if (!isSimmilar) {
-            filtered.push_back(line);
-        }
+    std::vector<std::vector<cv::Vec4i>> linesToMerge(numberOfLines);
+    for (int i = 0; i < lines.size(); i++) {
+        linesToMerge[labels[i]].push_back(lines[i]);
     }
-    return filtered;
+
+    std::vector<cv::Vec4i> mergedLines;
+    for (int i = 0; i < linesToMerge.size(); i++) {
+        cv::Vec4i line = mergeLines(linesToMerge[i]);
+        mergedLines.push_back(line);
+    }
+    return mergedLines;
 }
 
 int GridExtractor::orientation(const cv::Point &p, const cv::Point &q, const cv::Point &r) const {
@@ -166,26 +248,46 @@ GridExtractor::getIntersectingLines(const cv::Vec4i &line, const std::vector<cv:
     return intersecting;
 }
 
+double GridExtractor::getLineAngle(const cv::Vec4i &line) const {
+    return atan(getSlope(line));
+}
+
 std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> &lines) const {
     for (auto &&line : lines) {
         std::vector<cv::Vec4i> intersecting = getIntersectingLines(line, lines);
 
-        if (intersecting.size() == 2) {
-            cv::Vec4i line1 = intersecting[0];
-            cv::Vec4i line2 = intersecting[1];
+        if (intersecting.size() >= 2) {
+            for (int i = 0; i < intersecting.size() - 1; i++) {
+                cv::Vec4i line1 = intersecting[i];
+                cv::Vec4i line2 = intersecting[i+1];
 
-            std::vector<cv::Vec4i> line1Intersecting = getIntersectingLines(line1, lines);
-            std::vector<cv::Vec4i> line2Intersecting = getIntersectingLines(line2, lines);
+                std::vector<cv::Vec4i> line1Intersecting = getIntersectingLines(line1, lines);
+                std::vector<cv::Vec4i> line2Intersecting = getIntersectingLines(line2, lines);
 
-            std::sort(line1Intersecting.begin(), line1Intersecting.end(), compareLines);
-            std::sort(line2Intersecting.begin(), line2Intersecting.end(), compareLines);
+                //std::sort(line1Intersecting.begin(), line1Intersecting.end(), compareLines);
+                //std::sort(line2Intersecting.begin(), line2Intersecting.end(), compareLines);
 
-            std::vector<cv::Vec4i> common;
-            //getting common intersection lines
-            std::set_intersection(line1Intersecting.begin(), line1Intersecting.end(), line2Intersecting.begin(),
-                                  line2Intersecting.end(), std::back_inserter(common), compareLines);
-            if (common.size() >= 2) {
-                return std::vector<cv::Vec4i> {line1, line1Intersecting[0], line2, line1Intersecting[1]};
+                std::vector<cv::Vec4i> common;
+                //getting common intersection lines
+                std::set_intersection(line1Intersecting.begin(), line1Intersecting.end(), line2Intersecting.begin(),
+                                      line2Intersecting.end(), std::back_inserter(common), compareLines);
+                if (common.size() >= 2) {
+                    //found four grid like intersecting lines lines
+                    //check if they are pairs of relatively parallel lines
+                    for (int j = 0; j < common.size() - 1; ++j) {
+                        const double angleDiffThreshold = 0.610865; // 35 degrees
+                        double angle1 = getLineAngle(line1);
+                        double angle2 = getLineAngle(line2);
+                        double angle3 = getLineAngle(common[j]);
+                        double angle4 = getLineAngle(common[j+1]);
+                        double line12Diff = fabs(angle1 - angle2);
+                        double line34Diff = fabs(angle3 - angle4);
+                        if ((line12Diff < angleDiffThreshold || line12Diff > CV_PI - angleDiffThreshold) &&
+                            (line34Diff < angleDiffThreshold || line34Diff > CV_PI - angleDiffThreshold)) {
+                            return std::vector<cv::Vec4i> {line1, common[0], line2, common[1]};
+                        }
+                    }
+                }
             }
         }
     }

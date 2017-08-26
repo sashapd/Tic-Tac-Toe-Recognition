@@ -3,7 +3,6 @@
 //
 
 #include <opencv2/imgproc.hpp>
-#include <MacTypes.h>
 #include <opencv/cv.hpp>
 #include "CellClassifier.h"
 
@@ -49,7 +48,7 @@ bool CellClassifier::isCircle() {
 
     std::vector<cv::Vec3f> circles;
 
-    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 35);
+    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 30);
 
     for (auto &&circle : circles) {
         if (circle[2] > minRadius) {
@@ -79,7 +78,7 @@ bool CellClassifier::doIntersect(const cv::Point &p1, const cv::Point &q1, const
 }
 
 bool CellClassifier::isCross() {
-    const double minLength = mReflectionless.cols / 3;
+    const double minLength = mReflectionless.cols / 4;
 
     int offset = int(mReflectionless.cols * 0.15);
 
@@ -90,7 +89,9 @@ bool CellClassifier::isCross() {
     cv::Mat dst;
     cv::Canny(roiImg, dst, 50, 200, 3);
 
-    int morphSize = 3;
+	cv::imshow("temp1", dst);
+
+    int morphSize = 2;
     cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                      cv::Size(2 * morphSize + 1, 2 * morphSize + 1),
                                                      cv::Point(morphSize, morphSize));

@@ -1,5 +1,6 @@
 ﻿#include "GameState.h"
 #include <algorithm>
+#include <vector>
 
 Cell GameState::getCell(const int row, const int column)
 {
@@ -55,6 +56,22 @@ int GameState::getCellCountOfType(Cell type) const
 	return result;
 }
 
+std::vector<int> GameState::getCompleteLineFor(Cell type)
+{
+	for (int r = 0; r < kRowCount; ++r)
+		if (checkLine(0, r, 1, 0, type))
+			return getLine(0, r, 1, 0);
+	for (int c = 0; c < kColumnsCount; ++c)
+		if (checkLine(c, 0, 0, 1, type))
+			return getLine(c, 0, 1, 0);
+	if (checkLine(0, 0, 1, 1, type))
+		return getLine(0, 0, 1, 1);
+	if (checkLine(2, 0, -1, 1, type))
+		return getLine(2, 0, -1, 1);
+	std::vector<int> temp;
+	return temp;
+}
+
 bool GameState::checkWin(Cell type) const
 {
 	for (int r = 0; r < kRowCount; ++r)
@@ -72,4 +89,14 @@ bool GameState::checkLine(const int x, const int y, const int dx, const int dy, 
 		if (mCells[y + dy * i][x + dx * i] != type)
 			return false;
 	return true;
+}
+
+std::vector<int> GameState::getLine(int xStart, int yStart, int dx, int dy)
+{
+	std::vector<int> result;
+	result.push_back(yStart);
+	result.push_back(xStart);
+	result.push_back(yStart + dx * 2);
+	result.push_back(xStart + dy * 2);
+	return result;
 }

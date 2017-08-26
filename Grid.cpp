@@ -5,41 +5,70 @@
 #include "Grid.h"
 #include "CellClassifier.h"
 
-Grid::Grid(){}
-
-Grid::Grid(cv::Mat gridImage) {
-    mGridImage = gridImage;
+Grid::Grid()
+{
 }
 
-Grid::Grid(const Grid &grid) {
-    mGridImage = grid.mGridImage;
+Grid::Grid(cv::Mat gridImage)
+{
+	mGridImage = gridImage;
 }
 
-Grid &Grid::operator=(const Grid &grid) {
-    mGridImage = grid.mGridImage;
-    return *this;
+Grid::Grid(const Grid& grid)
+{
+	mGridImage = grid.mGridImage;
 }
 
-cv::Mat Grid::getImage() {
-    return mGridImage;
+Grid& Grid::operator=(const Grid& grid)
+{
+	mGridImage = grid.mGridImage;
+	return *this;
 }
 
-Cell Grid::getCellValue(int x, int y) {
-    cv::Mat cellImg = getCellImage(x, y);
-
-    CellClassifier classifier(cellImg);
-
-    Cell value = classifier.getCellValue();
-
-    return value;
+cv::Mat Grid::getImage()
+{
+	return mGridImage;
 }
 
-cv::Mat Grid::getCellImage(int x, int y) {
-    int cellHeigh = mGridImage.rows / 3;
-    int cellWidth = mGridImage.cols / 3;
+Cell Grid::getCellValue(int x, int y)
+{
+	cv::Mat cellImg = getCellImage(x, y);
 
-    cv::Rect roiRect(x * cellWidth, y * cellHeigh, cellWidth, cellHeigh);
-    cv::Mat cellRoi = mGridImage(roiRect);
+	CellClassifier classifier(cellImg);
 
-    return cellRoi;
+	Cell value = classifier.getCellValue();
+
+	return value;
+}
+
+cv::Mat Grid::getCellImage(int x, int y)
+{
+	int cellHeigh = mGridImage.rows / 3;
+	int cellWidth = mGridImage.cols / 3;
+
+	cv::Rect roiRect(x * cellWidth, y * cellHeigh, cellWidth, cellHeigh);
+	cv::Mat cellRoi = mGridImage(roiRect);
+
+	return cellRoi;
+}
+
+GameState Grid::getGameState()
+{
+	GameState game_state;
+	for (int i = 0; i < 3; i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			auto c = getCellValue(j, i);
+			if (c == O)
+			{
+				game_state.setCell(j, i, O);
+			}
+			else if (c == X)
+			{
+				game_state.setCell(j, i, X);
+			}
+		}
+	}
+	return game_state;
 }

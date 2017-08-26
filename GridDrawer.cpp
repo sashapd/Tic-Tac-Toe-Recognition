@@ -29,19 +29,44 @@ void GridDrawer::drawCross(int x, int y) {
     cv::line(cellImg, p3, p4, crossColor, 3);
 }
 
-void GridDrawer::drawWinnerLine(int x1, int y1, int x2, int y2, Cell winner) {
+void GridDrawer::drawWinnerLine(GameState game_state) {
+	if (!game_state.isOsWin() && !game_state.isXsWin())
+	{
+		return;
+	}
+	std::vector<int> line_points = game_state.isOsWin() 
+		? game_state.getCompleteLineFor(O) : game_state.getCompleteLineFor(X);
+	cv::Scalar color = game_state.isOsWin() ? circleColor : crossColor;
     cv::Mat gridImage = mGrid.getImage();
     int cellWidth = gridImage.cols / 3;
     int cellHeigh = gridImage.rows / 3;
-    cv::Point p1(x1 * cellWidth + cellWidth / 2, y1 * cellHeigh + cellHeigh / 2);
-    cv::Point p2(x2 * cellWidth + cellWidth / 2, y2 * cellHeigh + cellHeigh / 2);
-    cv::Scalar color;
-    if (winner == X) {
-        color = crossColor;
-    } else {
-        color = circleColor;
-    }
+	cv::Point p1(line_points[0] * cellWidth + cellWidth / 2, line_points[1] * cellHeigh + cellHeigh / 2);
+    cv::Point p2(line_points[2] * cellWidth + cellWidth / 2, line_points[3] * cellHeigh + cellHeigh / 2);
     cv::line(gridImage, p1, p2, color, 3);
+}
+
+void GridDrawer::drawCells(GameState game_state)
+{
+	for (int row = 0; row < GameState::kRowCount; ++row)
+	{
+		for (int column = 0; column < GameState::kColumnsCount; ++column)
+		{
+			auto cell = game_state.getCell(row, column);
+			if (cell == O)
+			{
+				drawCircle(row, column);
+			} else if (cell == X)
+			{
+				drawCross(row, column);
+			}
+		}
+	}
+}
+
+void GridDrawer::drawGameState(GameState game_state)
+{
+	drawCells(game_state);
+	drawWinnerLine(game_state);
 }
 
 void GridDrawer::emptyCell(cv::Mat cellImg) {

@@ -8,6 +8,7 @@
 
 #include <opencv2/core/mat.hpp>
 #include "Cell.h"
+#include "GameState.h"
 
 class Grid {
 public:
@@ -24,6 +25,8 @@ public:
     Cell getCellValue(int x, int y);
 
     cv::Mat getCellImage(int x, int y);
+
+	GameState getGameState();
 
 private:
     cv::Mat mGridImage;
