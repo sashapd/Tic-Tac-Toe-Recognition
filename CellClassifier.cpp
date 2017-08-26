@@ -89,8 +89,6 @@ bool CellClassifier::isCross() {
     cv::Mat dst;
     cv::Canny(roiImg, dst, 10, 50, 3);
 
-	cv::imshow("temp1", dst);
-
     int morphSize = 4;
     cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
                                                      cv::Size(2 * morphSize + 1, 2 * morphSize + 1),

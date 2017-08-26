@@ -76,7 +76,6 @@ void GridExtractor::putBackGrid(Grid grid) const {
 	mask = mask.setTo(cv::Scalar{ 255, 255, 255 }, addedElementsMask);
 
     foreground.copyTo(mImage, mask);
-	cv::imshow("TEMP", mask);
 }
 
 std::vector<cv::Vec4i> GridExtractor::findLines() {
@@ -98,18 +97,11 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
                                                          cv::Size(2 * dialationSize + 1, 2 * dialationSize + 1),
                                                          cv::Point(dialationSize, dialationSize));
     cv::Mat dilated;
-    cv::dilate(canny_output, dilated, dialationElement);
-
-    cv::imshow("r", dilated);
 
     std::vector<cv::Vec4i> lines;
     cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 100, 50, 10);
 
     lines = filterSimmilar(lines);
-
-    //for (auto &&line : lines) {
-        //cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
-    //}
 
     return lines;
 }
