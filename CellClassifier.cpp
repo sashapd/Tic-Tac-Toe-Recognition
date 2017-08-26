@@ -21,10 +21,10 @@ CellClassifier::CellClassifier(cv::Mat cellImage) {
 
 Cell CellClassifier::getCellValue() {
     Cell value = NONE;
-    if (isCircle()) {
-        value = O;
-    } else if (isCross()) {
+    if (isCross()) {
         value = X;
+    } else if (isCircle()) {
+        value = O;
     }
     return value;
 }
@@ -48,7 +48,7 @@ bool CellClassifier::isCircle() {
 
     std::vector<cv::Vec3f> circles;
 
-    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 30);
+    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 25);
 
     for (auto &&circle : circles) {
         if (circle[2] > minRadius) {
@@ -78,7 +78,7 @@ bool CellClassifier::doIntersect(const cv::Point &p1, const cv::Point &q1, const
 }
 
 bool CellClassifier::isCross() {
-    const double minLength = mReflectionless.cols / 4;
+    const double minLength = mReflectionless.cols / 3;
 
     int offset = int(mReflectionless.cols * 0.15);
 
@@ -87,7 +87,7 @@ bool CellClassifier::isCross() {
     cv::Mat roiImg = mReflectionless(roi);
 
     cv::Mat dst;
-    cv::Canny(roiImg, dst, 10, 100, 3);
+    cv::Canny(roiImg, dst, 10, 50, 3);
 
 	cv::imshow("temp1", dst);
 
@@ -111,14 +111,14 @@ bool CellClassifier::isCross() {
 
     //check proper intersection
     bool areIntersecting = false;
-    for (auto &&line1 : lines) {
-        for (auto &&line2 : lines) {
+    for (auto &&line1 : filteredLines) {
+        for (auto &&line2 : filteredLines) {
             cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]);
             cv::Point p3(line2[0], line2[1]), p4(line2[2], line2[3]);
             double dotProduct = (p1 - p2).dot(p3 - p4);
             double length1 = cv::norm(p1 - p2);
             double length2 = cv::norm(p3 - p4);
-            if(doIntersect(p1, p2, p3, p4) && fabs((dotProduct / (length1 * length2))) < cos(CV_PI / 2 -  0.785398)) { // 0.785398 in radians = 45 degrees
+            if(doIntersect(p1, p2, p3, p4) && fabs((dotProduct / (length1 * length2))) < cos(CV_PI / 2 -  0.523599)) { // 0.785398 in radians = 45 degrees
                 areIntersecting = true;
             }
         }
