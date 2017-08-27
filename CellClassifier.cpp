@@ -5,6 +5,7 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv/cv.hpp>
 #include "CellClassifier.h"
+#include "GeometricUtilities.h"
 
 CellClassifier::CellClassifier(cv::Mat cellImage) {
     cv::Mat foreground;
@@ -59,24 +60,6 @@ bool CellClassifier::isCircle() {
     return false;
 }
 
-int CellClassifier::orientation(const cv::Point &p, const cv::Point &q, const cv::Point &r) const {
-    int val = (q.y - p.y) * (r.x - q.x) -
-              (q.x - p.x) * (r.y - q.y);
-
-    return (val > 0) ? 1 : 2; // clock or counterclock wise
-}
-
-// function that returns true if line segment 'p1q1'
-// and 'p2q2' intersect.
-bool CellClassifier::doIntersect(const cv::Point &p1, const cv::Point &q1, const cv::Point &p2, const cv::Point &q2) const {
-    int o1 = orientation(p1, q1, p2);
-    int o2 = orientation(p1, q1, q2);
-    int o3 = orientation(p2, q2, p1);
-    int o4 = orientation(p2, q2, q1);
-
-    return (o1 != o2 && o3 != o4);
-}
-
 bool CellClassifier::isCross() {
     const double minLength = mReflectionless.cols / 3;
 
@@ -89,7 +72,7 @@ bool CellClassifier::isCross() {
     cv::Mat dst;
     cv::Canny(roiImg, dst, 10, 50, 3);
 
-	cv::imshow("temp1", dst);
+    cv::imshow("temp1", dst);
 
     int morphSize = 4;
     cv::Mat morphElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
@@ -99,7 +82,7 @@ bool CellClassifier::isCross() {
     cv::dilate(dst, dilated, morphElement);
 
     std::vector<cv::Vec4i> lines;
-    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 50, 50, 2);
+    cv::HoughLinesP(dilated, lines, 1, CV_PI / 180, 25, 50, 2);
 
     std::vector<cv::Vec4i> filteredLines;
     for (auto &&line : lines) {
@@ -118,7 +101,8 @@ bool CellClassifier::isCross() {
             double dotProduct = (p1 - p2).dot(p3 - p4);
             double length1 = cv::norm(p1 - p2);
             double length2 = cv::norm(p3 - p4);
-            if(doIntersect(p1, p2, p3, p4) && fabs((dotProduct / (length1 * length2))) < cos(CV_PI / 2 -  0.785398 )) { // 0.785398 in radians = 45 degrees
+            if (GeometricUtilities::doIntersect(p1, p2, p3, p4) && fabs((dotProduct / (length1 * length2))) <
+                                               cos(CV_PI / 2 - 0.785398)) { // 0.785398 in radians = 45 degrees
                 areIntersecting = true;
             }
         }

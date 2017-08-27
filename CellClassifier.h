@@ -20,10 +20,6 @@ private:
 
     bool isCircle();
 
-    int orientation(const cv::Point &p, const cv::Point &q, const cv::Point &r) const;
-
-    bool doIntersect(const cv::Point &p1, const cv::Point &q1, const cv::Point &p2, const cv::Point &q2) const;
-
     bool isCross();
 };
 
