@@ -22,10 +22,10 @@ CellClassifier::CellClassifier(cv::Mat cellImage) {
 
 Cell CellClassifier::getCellValue() {
     Cell value = NONE;
-    if (isCircle()) {
-        value = O;
-    } else if (isCross()) {
+    if (isCross()) {
         value = X;
+    } else if (isCircle()) {
+        value = O;
     }
     return value;
 }
@@ -49,7 +49,7 @@ bool CellClassifier::isCircle() {
 
     std::vector<cv::Vec3f> circles;
 
-    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 30);
+    cv::HoughCircles(blured, circles, cv::HOUGH_GRADIENT, 1, grayImage.rows / 16, 40, 25);
 
     for (auto &&circle : circles) {
         if (circle[2] > minRadius) {
@@ -95,14 +95,16 @@ bool CellClassifier::isCross() {
     //check proper intersection
     bool areIntersecting = false;
     for (auto &&line1 : filteredLines) {
-        for (auto &&line2 : filteredLines) {
+        std::vector<cv::Vec4i> intersecting = GeometricUtilities::getIntersectingLines(line1, filteredLines);
+        for (auto &&line2 : intersecting) {
             cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]);
             cv::Point p3(line2[0], line2[1]), p4(line2[2], line2[3]);
             double dotProduct = (p1 - p2).dot(p3 - p4);
             double length1 = cv::norm(p1 - p2);
             double length2 = cv::norm(p3 - p4);
-            if (GeometricUtilities::doIntersect(p1, p2, p3, p4) && fabs((dotProduct / (length1 * length2))) <
-                                               cos(CV_PI / 2 - 0.785398)) { // 0.785398 in radians = 45 degrees
+            if (fabs((dotProduct / (length1 * length2))) < cos(CV_PI / 2 - 0.785398) &&
+                GeometricUtilities::distToLine(p1, line2) > length2 / 2.5 &&
+                GeometricUtilities::distToLine(p2, line2) > length2 / 2.5) { // 0.785398 in radians = 45 degrees
                 areIntersecting = true;
             }
         }
