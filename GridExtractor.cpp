@@ -8,6 +8,7 @@
 #include "GridExtractor.h"
 #include <functional>
 #include "GridDrawer.h"
+#include "GeometricUtilities.h"
 
 
 GridExtractor::GridExtractor(const cv::Mat &image) {
@@ -67,16 +68,16 @@ void GridExtractor::putBackGrid(Grid grid) const {
     cv::warpPerspective(gridImage, foreground, transformMatr, foreground.size());
 
     cv::Mat mask = foreground > 0;
-	cv::Mat addedElementsMask;
-	cv::inRange(mask, GridDrawer::kCrossColor, GridDrawer::kCrossColor, addedElementsMask);
-	mask = mask.setTo(cv::Scalar{ 255, 255, 255 }, addedElementsMask);
-	cv::inRange(mask, GridDrawer::kCircleColor, GridDrawer::kCircleColor, addedElementsMask);
-	mask = mask.setTo(cv::Scalar{ 255, 255, 255 }, addedElementsMask);
-	cv::inRange(mask, GridDrawer::kWinningLineColor, GridDrawer::kWinningLineColor, addedElementsMask);
-	mask = mask.setTo(cv::Scalar{ 255, 255, 255 }, addedElementsMask);
+    cv::Mat addedElementsMask;
+    cv::inRange(mask, GridDrawer::kCrossColor, GridDrawer::kCrossColor, addedElementsMask);
+    mask = mask.setTo(cv::Scalar{255, 255, 255}, addedElementsMask);
+    cv::inRange(mask, GridDrawer::kCircleColor, GridDrawer::kCircleColor, addedElementsMask);
+    mask = mask.setTo(cv::Scalar{255, 255, 255}, addedElementsMask);
+    cv::inRange(mask, GridDrawer::kWinningLineColor, GridDrawer::kWinningLineColor, addedElementsMask);
+    mask = mask.setTo(cv::Scalar{255, 255, 255}, addedElementsMask);
 
     foreground.copyTo(mImage, mask);
-	cv::imshow("TEMP", mask);
+    cv::imshow("TEMP", mask);
 }
 
 std::vector<cv::Vec4i> GridExtractor::findLines() {
@@ -108,14 +109,10 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     lines = filterSimmilar(lines);
 
     //for (auto &&line : lines) {
-        //cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
+    //cv::line(mImage, cv::Point(line[0], line[1]), cv::Point(line[2], line[3]), cv::Scalar(255, 0, 255), 3);
     //}
 
     return lines;
-}
-
-double GridExtractor::getSlope(const cv::Vec4i &line) {
-    return (double) (line[1] - line[3]) / (line[0] - line[2] + 10e-8);
 }
 
 bool GridExtractor::compareLines(const cv::Vec4i &line1, const cv::Vec4i &line2) {
@@ -149,13 +146,6 @@ bool GridExtractor::comparePointsClockwise(cv::Point a, cv::Point b, cv::Point c
     return d1 > d2;
 }
 
-double GridExtractor::distToLine(const cv::Point &point, cv::Vec4i line) {
-    double dist = fabs(
-            (line[3] - line[1]) * point.x - (line[2] - line[0]) * point.y + line[2] * line[1] - line[3] * line[0])
-                  / sqrt(pow(line[3] - line[1], 2) + pow(line[2] - line[0], 2));
-    return dist;
-}
-
 bool GridExtractor::areSimmilar(cv::Vec4i line1, cv::Vec4i line2) {
     cv::Point p1(line1[0], line1[1]), p2(line1[2], line1[3]), p3(line2[0], line2[1]), p4(line2[2], line2[3]);
     double length1 = cv::norm(p1 - p2);
@@ -173,8 +163,10 @@ bool GridExtractor::areSimmilar(cv::Vec4i line1, cv::Vec4i line2) {
         fabs(length2 - (cv::norm(p3 - p1) + cv::norm(p4 - p1))) < lengthThresh ||
         fabs(length2 - (cv::norm(p3 - p2) + cv::norm(p4 - p2))) < lengthThresh) {
 
-        if (distToLine(p1, line2) < distThresh || distToLine(p2, line2) < distThresh ||
-            distToLine(p3, line1) < distThresh || distToLine(p4, line1) < distThresh) {
+        if (GeometricUtilities::distToLine(p1, line2) < distThresh ||
+            GeometricUtilities::distToLine(p2, line2) < distThresh ||
+            GeometricUtilities::distToLine(p3, line1) < distThresh ||
+            GeometricUtilities::distToLine(p4, line1) < distThresh) {
             return true;
         }
 
@@ -222,53 +214,17 @@ GridExtractor::filterSimmilar(std::vector<cv::Vec4i> lines) const {
     return mergedLines;
 }
 
-int GridExtractor::orientation(const cv::Point &p, const cv::Point &q, const cv::Point &r) const {
-    int val = (q.y - p.y) * (r.x - q.x) -
-              (q.x - p.x) * (r.y - q.y);
-
-    return (val > 0) ? 1 : 2; // clock or counterclock wise
-}
-
-// function that returns true if line segment 'p1q1'
-// and 'p2q2' intersect.
-bool
-GridExtractor::doIntersect(const cv::Point &p1, const cv::Point &q1, const cv::Point &p2, const cv::Point &q2) const {
-    int o1 = orientation(p1, q1, p2);
-    int o2 = orientation(p1, q1, q2);
-    int o3 = orientation(p2, q2, p1);
-    int o4 = orientation(p2, q2, q1);
-
-    return (o1 != o2 && o3 != o4);
-}
-
-std::vector<cv::Vec4i>
-GridExtractor::getIntersectingLines(const cv::Vec4i &line, const std::vector<cv::Vec4i> &lines) const {
-    std::vector<cv::Vec4i> intersecting;
-    cv::Point p2(line[0], line[1]), q2(line[2], line[3]);
-    for (auto &&l : lines) {
-        cv::Point p1(l[0], l[1]), q1(l[2], l[3]);
-        if (doIntersect(p1, q1, p2, q2)) {
-            intersecting.push_back(l);
-        }
-    }
-    return intersecting;
-}
-
-double GridExtractor::getLineAngle(const cv::Vec4i &line) const {
-    return atan(getSlope(line));
-}
-
 std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> &lines) const {
     for (auto &&line : lines) {
-        std::vector<cv::Vec4i> intersecting = getIntersectingLines(line, lines);
+        std::vector<cv::Vec4i> intersecting = GeometricUtilities::getIntersectingLines(line, lines);
 
         if (intersecting.size() >= 2) {
             for (int i = 0; i < intersecting.size() - 1; i++) {
                 cv::Vec4i line1 = intersecting[i];
-                cv::Vec4i line2 = intersecting[i+1];
+                cv::Vec4i line2 = intersecting[i + 1];
 
-                std::vector<cv::Vec4i> line1Intersecting = getIntersectingLines(line1, lines);
-                std::vector<cv::Vec4i> line2Intersecting = getIntersectingLines(line2, lines);
+                std::vector<cv::Vec4i> line1Intersecting = GeometricUtilities::getIntersectingLines(line1, lines);
+                std::vector<cv::Vec4i> line2Intersecting = GeometricUtilities::getIntersectingLines(line2, lines);
 
                 //std::sort(line1Intersecting.begin(), line1Intersecting.end(), compareLines);
                 //std::sort(line2Intersecting.begin(), line2Intersecting.end(), compareLines);
@@ -282,10 +238,10 @@ std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> 
                     //check if they are pairs of relatively parallel lines
                     for (int j = 0; j < common.size() - 1; ++j) {
                         const double angleDiffThreshold = 0.610865; // 35 degrees
-                        double angle1 = getLineAngle(line1);
-                        double angle2 = getLineAngle(line2);
-                        double angle3 = getLineAngle(common[j]);
-                        double angle4 = getLineAngle(common[j+1]);
+                        double angle1 = GeometricUtilities::getLineAngle(line1);
+                        double angle2 = GeometricUtilities::getLineAngle(line2);
+                        double angle3 = GeometricUtilities::getLineAngle(common[j]);
+                        double angle4 = GeometricUtilities::getLineAngle(common[j + 1]);
                         double line12Diff = fabs(angle1 - angle2);
                         double line34Diff = fabs(angle3 - angle4);
                         if ((line12Diff < angleDiffThreshold || line12Diff > CV_PI - angleDiffThreshold) &&
@@ -300,24 +256,13 @@ std::vector<cv::Vec4i> GridExtractor::getGridLines(const std::vector<cv::Vec4i> 
     return std::vector<cv::Vec4i>();
 }
 
-cv::Point2f GridExtractor::getIntesectionCoordinate(const cv::Vec4i &line1, const cv::Vec4i &line2) const {
-    cv::Point2f p1(line1[0], line1[1]), p2(line1[2], line1[3]);
-    cv::Point2f p3(line2[0], line2[1]), p4(line2[2], line2[3]);
-    cv::Point2f intersection;
-    intersection.x = ((p1.x * p2.y - p1.y * p2.x) * (p3.x - p4.x) - (p1.x - p2.x) * (p3.x * p4.y - p3.y * p4.x)) /
-                     ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
-    intersection.y = ((p1.x * p2.y - p1.y * p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x * p4.y - p3.y * p4.x)) /
-                     ((p1.x - p2.x) * (p3.y - p4.y) - (p1.y - p2.y) * (p3.x - p4.x));
-    return intersection;
-}
-
 std::vector<cv::Point2f> GridExtractor::getGridInnerCoordinates(std::vector<cv::Vec4i> lines) const {
     std::vector<cv::Point2f> innerPoints;
 
     for (int i = 0; i < lines.size() - 1; i++) {
-        innerPoints.push_back(getIntesectionCoordinate(lines[i], lines[i + 1]));
+        innerPoints.push_back(GeometricUtilities::getIntesectionCoordinate(lines[i], lines[i + 1]));
     }
-    innerPoints.push_back(getIntesectionCoordinate(lines[0], lines.back()));
+    innerPoints.push_back(GeometricUtilities::getIntesectionCoordinate(lines[0], lines.back()));
     cv::Point2f center(0, 0);
     for (auto &&point  : innerPoints) {
         center += point;
