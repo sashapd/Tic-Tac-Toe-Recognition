@@ -92,7 +92,7 @@ std::vector<cv::Vec4i> GridExtractor::findLines() {
     cv::Mat reflectionless = foreground - mImage;
 
     cv::Mat canny_output;
-    cv::Canny(reflectionless, canny_output, 50, 75, 3);
+    cv::Canny(reflectionless, canny_output, 50, 125, 3);
 
     int dialationSize = 1;
     cv::Mat dialationElement = cv::getStructuringElement(cv::MORPH_ELLIPSE,
