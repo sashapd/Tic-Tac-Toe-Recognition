@@ -265,8 +265,3 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
-
-# Images and samples
-*.jpg
-*.png
-*.jpeg
