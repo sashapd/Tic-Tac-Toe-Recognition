@@ -11,6 +11,6 @@ https://www.youtube.com/watch?v=Iq8LM_Rfw2U
 
 ## Screenshots
 
-![Tic-Tac-Toe 1](https://i.imgur.com/1euwacX.jpg)
+![Tic-Tac-Toe 1](https://i.imgur.com/umHhPGy.jpg)
 
 ![Tic-Tac-Toe 2](https://i.imgur.com/2ZfRDRi.jpg)
